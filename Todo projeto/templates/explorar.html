@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,11 +11,11 @@
     <!-- Script de tema ANTES do CSS para evitar flash -->
     <script>
         // Aplicar tema imediatamente antes da renderização
-        (function() {
+        (function () {
             try {
                 const savedTheme = localStorage.getItem('theme') || 'light';
                 document.documentElement.setAttribute('data-theme', savedTheme);
-                
+
                 // Também guarda o tema para o ícone (será usado depois)
                 window.__initialTheme = savedTheme;
             } catch (e) {
@@ -22,9 +23,10 @@
             }
         })();
     </script>
-    
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
+
 <body>
     <header class="cabecalho">
         <nav class="menu-principal">
@@ -34,7 +36,7 @@
                 <li><a href="{{ url_for('explorar') }}" class="menu-link">📁 Explorador</a></li>
             </ul>
         </nav>
-        
+
         <!-- Botão de tema -->
         <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema">
             <span class="theme-icon">☀️</span>
@@ -48,28 +50,36 @@
                 <a href="{{ url_for('home') }}" class="caminho-link">🏠 Home</a>
                 <span class="caminho-separador">/</span>
                 <a href="{{ url_for('explorar') }}" class="caminho-link">📁 Repositório</a>
-                
+
                 {% if partes %}
-                    {% for parte in partes %}
-                        <span class="caminho-separador">/</span>
-                        {% if loop.last %}
-                            <span class="caminho-atual" data-parte="{{ parte.nome }}" data-caminho="{{ parte.caminho }}">{{ parte.nome }}</span>
-                        {% else %}
-                            <a href="{{ url_for('explorar', caminho=parte.caminho) }}" class="caminho-link" data-parte="{{ parte.nome }}" data-caminho="{{ parte.caminho }}">{{ parte.nome }}</a>
-                        {% endif %}
-                    {% endfor %}
+                {% for parte in partes %}
+                <span class="caminho-separador">/</span>
+                {% if loop.last %}
+                <span class="caminho-atual" data-parte="{{ parte.nome }}" data-caminho="{{ parte.caminho }}">{{
+                    parte.nome }}</span>
+                {% else %}
+                <a href="{{ url_for('explorar', caminho=parte.caminho) }}" class="caminho-link"
+                    data-parte="{{ parte.nome }}" data-caminho="{{ parte.caminho }}">{{ parte.nome }}</a>
+                {% endif %}
+                {% endfor %}
                 {% endif %}
             </div>
         </div>
-        
+
         <!-- Ações principais -->
         <div class="acoes-principais">
             <div class="acoes-card upload-card">
-                <h3 class="acoes-titulo">📤 Upload de Arquivo</h3>
-                <form action="{{ url_for('upload', caminho=caminho_atual) }}" method="post" enctype="multipart/form-data" class="form-upload">
-                    <input type="file" name="arquivo" id="arquivo" class="input-upload" required>
-                    <label for="arquivo" class="botao botao-secundario">Escolher arquivo</label>
-                    <button type="submit" class="botao botao-primario">Enviar</button>
+                <h3 class="acoes-titulo">📤 Upload de Arquivos</h3>
+                <form action="{{ url_for('upload', caminho=caminho_atual) }}" method="post"
+                    enctype="multipart/form-data" class="form-upload">
+
+                    <input type="file" name="arquivo" id="arquivo" class="input-upload" multiple required>
+                    <label for="arquivo" class="botao botao-secundario">
+                        📂 Escolher arquivos
+                    </label>
+                    <button type="submit" class="botao botao-primario">
+                        📤 Enviar
+                    </button>
                 </form>
             </div>
 
@@ -95,11 +105,8 @@
         <div class="pesquisa-wrapper">
             <div class="pesquisa-container">
                 <span class="pesquisa-icone">🔍</span>
-                <input type="text" 
-                    id="pesquisa-input" 
-                    class="pesquisa-input" 
-                    placeholder="Pesquisar arquivos e pastas..."
-                    autocomplete="off">
+                <input type="text" id="pesquisa-input" class="pesquisa-input"
+                    placeholder="Pesquisar arquivos e pastas..." autocomplete="off">
                 <button id="pesquisa-limpar" class="pesquisa-limpar" title="Limpar busca">✕</button>
             </div>
             <div id="pesquisa-contador" class="pesquisa-contador"></div>
@@ -166,150 +173,159 @@
         <section class="listagem-itens">
             <!-- Pastas -->
             {% if pastas %}
-                {% for pasta in pastas %}
-                <div class="item-link" data-nome="{{ pasta.nome }}" data-tipo="pasta" data-caminho="{{ caminho_atual + '/' + pasta.nome if caminho_atual else pasta.nome }}">
-                    <div class="item-card item-pasta">
-                        <div class="item-checkbox" onclick="event.stopPropagation()">
-                            <input type="checkbox" class="item-checkbox-input" data-nome="{{ pasta.nome }}" data-tipo="pasta" data-caminho="{{ caminho_atual + '/' + pasta.nome if caminho_atual else pasta.nome }}">
-                        </div>
-                        <div class="item-icone">📁</div>
-                        <div class="item-info">
-                            <div class="item-nome" title="{{ pasta.nome }}">{{ pasta.nome }}</div>
-                            <div class="item-meta">
-                                <span class="item-tipo">Pasta</span>
-                                <span class="item-tamanho">{{ pasta.tamanho_formatado }}</span>
-                                <span class="item-data">{{ pasta.data_modificacao }}</span>
-                            </div>
-                        </div>
-                        <div class="item-acoes" onclick="event.stopPropagation()">
-                            <form action="{{ url_for('deletar_pasta', caminho_pasta=caminho_atual + '/' + pasta.nome if caminho_atual else pasta.nome) }}" 
-                                method="post" 
-                                class="form-excluir"
-                                onsubmit="event.preventDefault(); confirmarExclusaoPasta('{{ pasta.nome }}').then(result => { if(result) this.submit(); }); return false;">
-                                <button type="submit" class="botao-excluir" title="Excluir pasta">🗑️</button>
-                            </form>
+            {% for pasta in pastas %}
+            <div class="item-link" data-nome="{{ pasta.nome }}" data-tipo="pasta"
+                data-caminho="{{ caminho_atual + '/' + pasta.nome if caminho_atual else pasta.nome }}">
+                <div class="item-card item-pasta">
+                    <div class="item-checkbox" onclick="event.stopPropagation()">
+                        <input type="checkbox" class="item-checkbox-input" data-nome="{{ pasta.nome }}"
+                            data-tipo="pasta"
+                            data-caminho="{{ caminho_atual + '/' + pasta.nome if caminho_atual else pasta.nome }}">
+                    </div>
+                    <div class="item-icone">📁</div>
+                    <div class="item-info">
+                        <div class="item-nome" title="{{ pasta.nome }}">{{ pasta.nome }}</div>
+                        <div class="item-meta">
+                            <span class="item-tipo">Pasta</span>
+                            <span class="item-tamanho">{{ pasta.tamanho_formatado }}</span>
+                            <span class="item-data">{{ pasta.data_modificacao }}</span>
                         </div>
                     </div>
+                    <div class="item-acoes" onclick="event.stopPropagation()">
+                        <form
+                            action="{{ url_for('deletar_pasta', caminho_pasta=caminho_atual + '/' + pasta.nome if caminho_atual else pasta.nome) }}"
+                            method="post" class="form-excluir"
+                            onsubmit="event.preventDefault(); confirmarExclusaoPasta('{{ pasta.nome }}').then(result => { if(result) this.submit(); }); return false;">
+                            <button type="submit" class="botao-excluir" title="Excluir pasta">🗑️</button>
+                        </form>
+                    </div>
                 </div>
-                {% endfor %}
+            </div>
+            {% endfor %}
             {% endif %}
 
             <!-- Imagens -->
             {% if imagens %}
-                {% for imagem in imagens %}
-                <div class="item-link" data-nome="{{ imagem.nome }}" data-tipo="imagem" data-caminho="{{ caminho_atual + '/' + imagem.nome if caminho_atual else imagem.nome }}">
-                    <div class="item-card item-imagem">
-                        <div class="item-checkbox" onclick="event.stopPropagation()">
-                            <input type="checkbox" class="item-checkbox-input" data-nome="{{ imagem.nome }}" data-tipo="imagem" data-caminho="{{ caminho_atual + '/' + imagem.nome if caminho_atual else imagem.nome }}">
-                        </div>
-                        <div class="item-icone">
-                            <img src="{{ url_for('visualizar_arquivo', caminho_arquivo=caminho_atual + '/' + imagem.nome if caminho_atual else imagem.nome) }}" 
-                                alt="{{ imagem.nome }}" 
-                                class="item-thumbnail">
-                        </div>
-                        <div class="item-info">
-                            <div class="item-nome" title="{{ imagem.nome }}">{{ imagem.nome }}</div>
-                            <div class="item-meta">
-                                <span class="item-tipo">Imagem</span>
-                                <span class="item-tamanho">{{ imagem.tamanho_formatado }}</span>
-                                <span class="item-data">{{ imagem.data_modificacao }}</span>
-                            </div>
-                        </div>
-                        <div class="item-acoes" onclick="event.stopPropagation()">
-                            <a href="{{ url_for('download', caminho_arquivo=caminho_atual + '/' + imagem.nome if caminho_atual else imagem.nome) }}" 
-                            class="botao-download" 
-                            title="Download"
-                            onclick="event.stopPropagation()">⬇️</a>
-                            <form action="{{ url_for('deletar_arquivo', caminho_arquivo=caminho_atual + '/' + imagem.nome if caminho_atual else imagem.nome) }}" 
-                                method="post" 
-                                class="form-excluir"
-                                onsubmit="event.preventDefault(); confirmarExclusao('{{ imagem.nome }}').then(result => { if(result) this.submit(); }); return false;">
-                                <button type="submit" class="botao-excluir" title="Excluir">🗑️</button>
-                            </form>
+            {% for imagem in imagens %}
+            <div class="item-link" data-nome="{{ imagem.nome }}" data-tipo="imagem"
+                data-caminho="{{ caminho_atual + '/' + imagem.nome if caminho_atual else imagem.nome }}">
+                <div class="item-card item-imagem">
+                    <div class="item-checkbox" onclick="event.stopPropagation()">
+                        <input type="checkbox" class="item-checkbox-input" data-nome="{{ imagem.nome }}"
+                            data-tipo="imagem"
+                            data-caminho="{{ caminho_atual + '/' + imagem.nome if caminho_atual else imagem.nome }}">
+                    </div>
+                    <div class="item-icone">
+                        <img src="{{ url_for('visualizar_arquivo', caminho_arquivo=caminho_atual + '/' + imagem.nome if caminho_atual else imagem.nome) }}"
+                            alt="{{ imagem.nome }}" class="item-thumbnail">
+                    </div>
+                    <div class="item-info">
+                        <div class="item-nome" title="{{ imagem.nome }}">{{ imagem.nome }}</div>
+                        <div class="item-meta">
+                            <span class="item-tipo">Imagem</span>
+                            <span class="item-tamanho">{{ imagem.tamanho_formatado }}</span>
+                            <span class="item-data">{{ imagem.data_modificacao }}</span>
                         </div>
                     </div>
+                    <div class="item-acoes" onclick="event.stopPropagation()">
+                        <a href="{{ url_for('download', caminho_arquivo=caminho_atual + '/' + imagem.nome if caminho_atual else imagem.nome) }}"
+                            class="botao-download" title="Download" onclick="event.stopPropagation()">⬇️</a>
+                        <form
+                            action="{{ url_for('deletar_arquivo', caminho_arquivo=caminho_atual + '/' + imagem.nome if caminho_atual else imagem.nome) }}"
+                            method="post" class="form-excluir"
+                            onsubmit="event.preventDefault(); confirmarExclusao('{{ imagem.nome }}').then(result => { if(result) this.submit(); }); return false;">
+                            <button type="submit" class="botao-excluir" title="Excluir">🗑️</button>
+                        </form>
+                    </div>
                 </div>
-                {% endfor %}
+            </div>
+            {% endfor %}
             {% endif %}
 
             <!-- Áudios -->
             {% if audios %}
-                {% for audio in audios %}
-                <div class="item-link" data-nome="{{ audio.nome }}" data-tipo="audio" data-caminho="{{ caminho_atual + '/' + audio.nome if caminho_atual else audio.nome }}">
-                    <div class="item-card item-audio">
-                        <div class="item-checkbox" onclick="event.stopPropagation()">
-                            <input type="checkbox" class="item-checkbox-input" data-nome="{{ audio.nome }}" data-tipo="audio" data-caminho="{{ caminho_atual + '/' + audio.nome if caminho_atual else audio.nome }}">
-                        </div>
-                        <div class="item-icone">🎵</div>
-                        <div class="item-info">
-                            <div class="audio-wrapper">
-                                <div class="item-nome" title="{{ audio.nome }}">{{ audio.nome }}</div>
-                                <div class="item-meta">
-                                    <span class="item-tipo">Áudio</span>
-                                    <span class="item-tamanho">{{ audio.tamanho_formatado }}</span>
-                                    <span class="item-data">{{ audio.data_modificacao }}</span>
-                                </div>
-                                <audio controls class="audio-player" onclick="event.stopPropagation()">
-                                    <source src="{{ url_for('visualizar_arquivo', caminho_arquivo=caminho_atual + '/' + audio.nome if caminho_atual else audio.nome) }}">
-                                </audio>
+            {% for audio in audios %}
+            <div class="item-link" data-nome="{{ audio.nome }}" data-tipo="audio"
+                data-caminho="{{ caminho_atual + '/' + audio.nome if caminho_atual else audio.nome }}">
+                <div class="item-card item-audio">
+                    <div class="item-checkbox" onclick="event.stopPropagation()">
+                        <input type="checkbox" class="item-checkbox-input" data-nome="{{ audio.nome }}"
+                            data-tipo="audio"
+                            data-caminho="{{ caminho_atual + '/' + audio.nome if caminho_atual else audio.nome }}">
+                    </div>
+                    <div class="item-icone">🎵</div>
+                    <div class="item-info">
+                        <div class="audio-wrapper">
+                            <div class="item-nome" title="{{ audio.nome }}">{{ audio.nome }}</div>
+                            <div class="item-meta">
+                                <span class="item-tipo">Áudio</span>
+                                <span class="item-tamanho">{{ audio.tamanho_formatado }}</span>
+                                <span class="item-data">{{ audio.data_modificacao }}</span>
                             </div>
-                        </div>
-                        <div class="item-acoes" onclick="event.stopPropagation()">
-                            <a href="{{ url_for('download', caminho_arquivo=caminho_atual + '/' + audio.nome if caminho_atual else audio.nome) }}" 
-                            class="botao-download" 
-                            title="Download"
-                            onclick="event.stopPropagation()">⬇️</a>
-                            <form action="{{ url_for('deletar_arquivo', caminho_arquivo=caminho_atual + '/' + audio.nome if caminho_atual else audio.nome) }}" 
-                                method="post" 
-                                class="form-excluir"
-                                onsubmit="event.preventDefault(); confirmarExclusao('{{ audio.nome }}').then(result => { if(result) this.submit(); }); return false;">
-                                <button type="submit" class="botao-excluir" title="Excluir">🗑️</button>
-                            </form>
+                            <audio controls class="audio-player" onclick="event.stopPropagation()">
+                                <source
+                                    src="{{ url_for('visualizar_arquivo', caminho_arquivo=caminho_atual + '/' + audio.nome if caminho_atual else audio.nome) }}">
+                            </audio>
                         </div>
                     </div>
+                    <div class="item-acoes" onclick="event.stopPropagation()">
+                        <a href="{{ url_for('download', caminho_arquivo=caminho_atual + '/' + audio.nome if caminho_atual else audio.nome) }}"
+                            class="botao-download" title="Download" onclick="event.stopPropagation()">⬇️</a>
+                        <form
+                            action="{{ url_for('deletar_arquivo', caminho_arquivo=caminho_atual + '/' + audio.nome if caminho_atual else audio.nome) }}"
+                            method="post" class="form-excluir"
+                            onsubmit="event.preventDefault(); confirmarExclusao('{{ audio.nome }}').then(result => { if(result) this.submit(); }); return false;">
+                            <button type="submit" class="botao-excluir" title="Excluir">🗑️</button>
+                        </form>
+                    </div>
                 </div>
-                {% endfor %}
+            </div>
+            {% endfor %}
             {% endif %}
 
-           <!-- Arquivos comuns -->
+            <!-- Arquivos comuns -->
             {% if arquivos %}
-                {% for arquivo in arquivos %}
-                <div class="item-link" data-nome="{{ arquivo.nome }}" data-tipo="arquivo" data-caminho="{{ caminho_atual + '/' + arquivo.nome if caminho_atual else arquivo.nome }}">
-                    <div class="item-card item-arquivo">
-                        <div class="item-checkbox" onclick="event.stopPropagation()">
-                            <input type="checkbox" class="item-checkbox-input" data-nome="{{ arquivo.nome }}" data-tipo="arquivo" data-caminho="{{ caminho_atual + '/' + arquivo.nome if caminho_atual else arquivo.nome }}">
-                        </div>
-                        <div class="item-icone file-icon" data-extensao="{{ arquivo.nome.split('.')[-1].lower() if '.' in arquivo.nome else 'file' }}"></div>
-                        <div class="item-info">
-                            <div class="item-nome" title="{{ arquivo.nome }}">{{ arquivo.nome }}</div>
-                            <div class="item-meta">
-                                <span class="item-tipo">Arquivo</span>
-                                <span class="item-tamanho">{{ arquivo.tamanho_formatado }}</span>
-                                <span class="item-data">{{ arquivo.data_modificacao }}</span>
-                            </div>
-                        </div>
-                        <div class="item-acoes" onclick="event.stopPropagation()">
-                            <a href="{{ url_for('download', caminho_arquivo=caminho_atual + '/' + arquivo.nome if caminho_atual else arquivo.nome) }}" 
-                            class="botao-download" 
-                            title="Download"
-                            onclick="event.stopPropagation()">⬇️</a>
-                            <form action="{{ url_for('deletar_arquivo', caminho_arquivo=caminho_atual + '/' + arquivo.nome if caminho_atual else arquivo.nome) }}" 
-                                method="post" 
-                                class="form-excluir"
-                                onsubmit="event.preventDefault(); confirmarExclusao('{{ arquivo.nome }}').then(result => { if(result) this.submit(); }); return false;">
-                                <button type="submit" class="botao-excluir" title="Excluir">🗑️</button>
-                            </form>
+            {% for arquivo in arquivos %}
+            <div class="item-link" data-nome="{{ arquivo.nome }}" data-tipo="arquivo"
+                data-caminho="{{ caminho_atual + '/' + arquivo.nome if caminho_atual else arquivo.nome }}">
+                <div class="item-card item-arquivo">
+                    <div class="item-checkbox" onclick="event.stopPropagation()">
+                        <input type="checkbox" class="item-checkbox-input" data-nome="{{ arquivo.nome }}"
+                            data-tipo="arquivo"
+                            data-caminho="{{ caminho_atual + '/' + arquivo.nome if caminho_atual else arquivo.nome }}">
+                    </div>
+                    <div class="item-icone file-icon"
+                        data-extensao="{{ arquivo.nome.split('.')[-1].lower() if '.' in arquivo.nome else 'file' }}">
+                    </div>
+                    <div class="item-info">
+                        <div class="item-nome" title="{{ arquivo.nome }}">{{ arquivo.nome }}</div>
+                        <div class="item-meta">
+                            <span class="item-tipo">Arquivo</span>
+                            <span class="item-tamanho">{{ arquivo.tamanho_formatado }}</span>
+                            <span class="item-data">{{ arquivo.data_modificacao }}</span>
                         </div>
                     </div>
+                    <div class="item-acoes" onclick="event.stopPropagation()">
+                        <a href="{{ url_for('download', caminho_arquivo=caminho_atual + '/' + arquivo.nome if caminho_atual else arquivo.nome) }}"
+                            class="botao-download" title="Download" onclick="event.stopPropagation()">⬇️</a>
+                        <form
+                            action="{{ url_for('deletar_arquivo', caminho_arquivo=caminho_atual + '/' + arquivo.nome if caminho_atual else arquivo.nome) }}"
+                            method="post" class="form-excluir"
+                            onsubmit="event.preventDefault(); confirmarExclusao('{{ arquivo.nome }}').then(result => { if(result) this.submit(); }); return false;">
+                            <button type="submit" class="botao-excluir" title="Excluir">🗑️</button>
+                        </form>
+                    </div>
                 </div>
-                {% endfor %}
+            </div>
+            {% endfor %}
             {% endif %}
 
             <!-- Mensagem se pasta vazia -->
             {% if not pastas and not imagens and not audios and not arquivos %}
             <div class="pasta-vazia">
                 <p>📂 Esta pasta está vazia</p>
-                <p style="font-size: 0.9rem; margin-top: 0.5rem;">Use os formulários acima para adicionar arquivos ou pastas</p>
+                <p style="font-size: 0.9rem; margin-top: 0.5rem;">Use os formulários acima para adicionar arquivos ou
+                    pastas</p>
             </div>
             {% endif %}
         </section>
@@ -318,7 +334,7 @@
     <footer class="rodape">
         <p>Meu Drive Pessoal © 2024 - Seu repositório de arquivos</p>
     </footer>
-    
+
     <!-- Lightbox para imagens -->
     <div class="lightbox-overlay" id="lightbox">
         <div class="lightbox-container">
@@ -361,6 +377,13 @@
         </div>
     </div>
 
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notification" style="display: none;">
+        <div class="toast-content">
+            <span class="toast-icon" id="toast-icon">✅</span>
+            <span class="toast-message" id="toast-message"></span>
+        </div>
+    </div>
 
     <!--Divisão HTML - JAVASCRIPT -->
     <script>
@@ -376,7 +399,7 @@
         }
 
         // Lightbox para imagens
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const lightbox = document.getElementById('lightbox');
             const lightboxImage = document.getElementById('lightbox-image');
             const lightboxTitle = document.getElementById('lightbox-title');
@@ -386,10 +409,10 @@
             const lightboxClose = document.getElementById('lightbox-close');
             const lightboxPrev = document.getElementById('lightbox-prev');
             const lightboxNext = document.getElementById('lightbox-next');
-            
+
             let currentImageIndex = 0;
             let images = [];
-            
+
             function updateImageList() {
                 images = [];
                 document.querySelectorAll('.item-imagem').forEach((card, index) => {
@@ -402,7 +425,7 @@
                         const downloadBtn = card.querySelector('.botao-download');
                         const downloadUrl = downloadBtn ? downloadBtn.getAttribute('href') : '';
                         const deleteForm = card.querySelector('form');
-                        
+
                         images.push({
                             nome: nome,
                             visualizarUrl: visualizarUrl,
@@ -414,19 +437,19 @@
                     }
                 });
             }
-            
+
             function openLightbox(index) {
                 if (images.length === 0) return;
-                
+
                 currentImageIndex = index;
                 const image = images[currentImageIndex];
-                
+
                 lightboxImage.src = image.visualizarUrl;
                 lightboxTitle.textContent = image.nome;
                 lightboxInfo.textContent = `Imagem ${currentImageIndex + 1} de ${images.length}`;
                 lightboxDownload.href = image.downloadUrl;
-                
-                lightboxDelete.onclick = function(e) {
+
+                lightboxDelete.onclick = function (e) {
                     e.preventDefault();
                     if (confirm(`Tem certeza que deseja excluir a imagem: ${image.nome}?`)) {
                         if (image.deleteForm) {
@@ -436,70 +459,70 @@
                         }
                     }
                 };
-                
+
                 lightbox.classList.add('active');
                 document.body.style.overflow = 'hidden';
             }
-            
+
             function closeLightbox() {
                 lightbox.classList.remove('active');
                 lightboxImage.src = '';
                 document.body.style.overflow = '';
             }
-            
+
             function prevImage() {
                 if (images.length > 0) {
                     currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
                     openLightbox(currentImageIndex);
                 }
             }
-            
+
             function nextImage() {
                 if (images.length > 0) {
                     currentImageIndex = (currentImageIndex + 1) % images.length;
                     openLightbox(currentImageIndex);
                 }
             }
-            
+
             updateImageList();
-            
+
             document.querySelectorAll('.item-imagem').forEach((card) => {
                 const link = card.closest('.item-link');
                 if (link) {
-                    link.addEventListener('click', function(e) {
-                        if (e.target.closest('.botao-download') || 
-                            e.target.closest('.botao-excluir') || 
+                    link.addEventListener('click', function (e) {
+                        if (e.target.closest('.botao-download') ||
+                            e.target.closest('.botao-excluir') ||
                             e.target.closest('form') ||
                             e.target.closest('button') ||
                             e.target.closest('.item-checkbox') ||
                             e.target.closest('.item-checkbox-input')) {
                             return;
                         }
-                        
+
                         e.preventDefault();
                         e.stopPropagation();
-                        
+
                         updateImageList();
-                        
+
                         const currentCard = e.currentTarget.querySelector('.item-imagem');
                         const newIndex = Array.from(document.querySelectorAll('.item-imagem')).indexOf(currentCard);
-                        
+
                         if (newIndex !== -1) {
                             openLightbox(newIndex);
                         }
                     });
                 }
             });
-            
+
             lightboxClose.addEventListener('click', closeLightbox);
             lightboxPrev.addEventListener('click', prevImage);
             lightboxNext.addEventListener('click', nextImage);
-            
-            document.addEventListener('keydown', function(e) {
+
+            document.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape' && lightbox.classList.contains('active')) {
                     closeLightbox();
                 }
-                
+
                 if (lightbox.classList.contains('active')) {
                     if (e.key === 'ArrowLeft') {
                         prevImage();
@@ -508,8 +531,8 @@
                     }
                 }
             });
-            
-            lightbox.addEventListener('click', function(e) {
+
+            lightbox.addEventListener('click', function (e) {
                 if (e.target === lightbox) {
                     closeLightbox();
                 }
@@ -517,29 +540,29 @@
         });
 
         // Tema escuro
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const themeToggle = document.getElementById('theme-toggle');
             const themeIcon = themeToggle.querySelector('.theme-icon');
-            
+
             const savedTheme = document.documentElement.getAttribute('data-theme') || 'light';
             updateThemeIcon(savedTheme);
-            
-            themeToggle.addEventListener('click', function() {
+
+            themeToggle.addEventListener('click', function () {
                 const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
                 const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-                
+
                 document.documentElement.setAttribute('data-theme', newTheme);
                 localStorage.setItem('theme', newTheme);
                 updateThemeIcon(newTheme);
             });
-            
+
             function updateThemeIcon(theme) {
                 themeIcon.textContent = theme === 'dark' ? '🌙' : '☀️';
             }
         });
 
         // ===== BARRA DE PESQUISA =====
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const searchInput = document.getElementById('pesquisa-input');
             const searchClear = document.getElementById('pesquisa-limpar');
             const searchCounter = document.getElementById('pesquisa-contador');
@@ -558,7 +581,7 @@
 
             function performSearch() {
                 const searchTerm = searchInput.value.toLowerCase().trim();
-                
+
                 searchClear.classList.toggle('visible', searchTerm.length > 0);
 
                 if (searchTerm === '') {
@@ -567,7 +590,7 @@
                         item.classList.remove('destaque-pesquisa');
                     });
                     updateCounter(items.length);
-                    
+
                     if (typeof window.updateItemCount === 'function') {
                         window.updateItemCount();
                     }
@@ -579,16 +602,16 @@
                 items.forEach(item => {
                     const nomeElement = item.querySelector('.item-nome');
                     const tipoElement = item.querySelector('.item-tipo');
-                    
+
                     const nome = nomeElement ? nomeElement.textContent.toLowerCase() : '';
                     const tipo = tipoElement ? tipoElement.textContent.toLowerCase() : '';
-                    
+
                     const matches = nome.includes(searchTerm) || tipo.includes(searchTerm);
-                    
+
                     if (matches) {
                         item.style.display = 'block';
                         matchCount++;
-                        
+
                         if (nome === searchTerm || tipo === searchTerm) {
                             item.classList.add('destaque-pesquisa');
                             setTimeout(() => {
@@ -601,18 +624,18 @@
                 });
 
                 updateCounter(matchCount);
-                
+
                 if (typeof window.updateItemCount === 'function') {
                     window.updateItemCount();
                 }
             }
 
-            searchInput.addEventListener('input', function() {
+            searchInput.addEventListener('input', function () {
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(performSearch, 150);
             });
 
-            searchClear.addEventListener('click', function() {
+            searchClear.addEventListener('click', function () {
                 searchInput.value = '';
                 searchInput.focus();
                 performSearch();
@@ -622,86 +645,86 @@
         });
 
         // ===== ALTERNAR VISUALIZAÇÃO (GRID/LISTA) =====
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const viewGrid = document.getElementById('view-grid');
             const viewList = document.getElementById('view-list');
             const listagemContainer = document.querySelector('.listagem-itens');
             const totalItensSpan = document.getElementById('view-total-itens');
-            
-            window.updateItemCount = function() {
+
+            window.updateItemCount = function () {
                 const visibleItems = document.querySelectorAll('.item-link:not([style*="display: none"])').length;
                 totalItensSpan.textContent = visibleItems;
             };
-            
+
             const savedView = localStorage.getItem('viewMode') || 'grid';
             setViewMode(savedView);
-            
-            viewGrid.addEventListener('click', function() {
+
+            viewGrid.addEventListener('click', function () {
                 setViewMode('grid');
             });
-            
-            viewList.addEventListener('click', function() {
+
+            viewList.addEventListener('click', function () {
                 setViewMode('list');
             });
-            
+
             function setViewMode(mode) {
                 viewGrid.classList.toggle('active', mode === 'grid');
                 viewList.classList.toggle('active', mode === 'list');
-                
+
                 if (mode === 'list') {
                     listagemContainer.classList.add('view-list');
                 } else {
                     listagemContainer.classList.remove('view-list');
                 }
-                
+
                 localStorage.setItem('viewMode', mode);
-                
+
                 setTimeout(window.updateItemCount, 50);
             }
-            
+
             const searchInput = document.getElementById('pesquisa-input');
             if (searchInput) {
-                searchInput.addEventListener('input', function() {
+                searchInput.addEventListener('input', function () {
                     setTimeout(window.updateItemCount, 200);
                 });
             }
-            
+
             window.updateItemCount();
-            
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
+
+            const observer = new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) {
                     if (mutation.attributeName === 'style') {
                         window.updateItemCount();
                     }
                 });
             });
-            
+
             document.querySelectorAll('.item-link').forEach(item => {
                 observer.observe(item, { attributes: true });
             });
         });
 
         // ===== ORDENAÇÃO =====
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const ordenacaoBotoes = {
                 nome: document.getElementById('ordenar-nome'),
                 tipo: document.getElementById('ordenar-tipo'),
                 tamanho: document.getElementById('ordenar-tamanho'),
                 data: document.getElementById('ordenar-data')
             };
-            
+
             if (!ordenacaoBotoes.nome) {
                 console.log('Botões de ordenação não encontrados');
                 return;
             }
-            
+
             let ordenacaoAtual = {
                 criterio: 'tipo',
                 ordem: 'asc'
             };
-            
+
             let isOrdenando = false;
-            
+
             try {
                 const savedOrdenacao = localStorage.getItem('ordenacao');
                 if (savedOrdenacao) {
@@ -710,35 +733,35 @@
             } catch (e) {
                 console.error('Erro ao carregar ordenação salva:', e);
             }
-            
+
             function atualizarBotoesOrdenacao() {
                 Object.values(ordenacaoBotoes).forEach(btn => {
                     if (btn) {
                         btn.classList.remove('active');
                     }
                 });
-                
+
                 const btnAtual = ordenacaoBotoes[ordenacaoAtual.criterio];
                 if (btnAtual) {
                     btnAtual.classList.add('active');
                     btnAtual.setAttribute('data-ordem', ordenacaoAtual.ordem);
                 }
             }
-            
+
             function parseTamanho(tamanhoTexto) {
                 if (!tamanhoTexto || tamanhoTexto === '--') return 0;
-                
+
                 const match = tamanhoTexto.match(/([\d.]+)\s*(\w+)/);
                 if (!match) return 0;
-                
+
                 const [_, valor, unidade] = match;
-                const unidades = { 'B': 1, 'KB': 1024, 'MB': 1024**2, 'GB': 1024**3, 'TB': 1024**4 };
+                const unidades = { 'B': 1, 'KB': 1024, 'MB': 1024 ** 2, 'GB': 1024 ** 3, 'TB': 1024 ** 4 };
                 return parseFloat(valor) * (unidades[unidade] || 1);
             }
-            
+
             function parseData(dataTexto) {
                 if (!dataTexto) return 0;
-                
+
                 if (dataTexto.includes('Hoje')) {
                     const hora = dataTexto.match(/(\d{2}):(\d{2})/);
                     if (hora) {
@@ -758,34 +781,34 @@
                     const partes = dataTexto.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
                     if (partes) {
                         const [_, dia, mes, ano, hora, min] = partes;
-                        return new Date(ano, mes-1, dia, hora, min).getTime();
+                        return new Date(ano, mes - 1, dia, hora, min).getTime();
                     }
                 }
                 return 0;
             }
-            
+
             function ordenarItens() {
                 if (isOrdenando) return;
-                
+
                 const container = document.querySelector('.listagem-itens');
                 if (!container) return;
-                
+
                 const items = Array.from(container.querySelectorAll('.item-link'));
                 if (items.length === 0) return;
-                
+
                 isOrdenando = true;
-                
+
                 items.sort((a, b) => {
                     let valorA, valorB;
-                    
-                    switch(ordenacaoAtual.criterio) {
+
+                    switch (ordenacaoAtual.criterio) {
                         case 'nome':
                             const nomeA = a.querySelector('.item-nome')?.textContent || '';
                             const nomeB = b.querySelector('.item-nome')?.textContent || '';
                             valorA = nomeA.toLowerCase();
                             valorB = nomeB.toLowerCase();
                             break;
-                            
+
                         case 'tipo':
                             const getTipoPeso = (item) => {
                                 if (item.querySelector('.item-pasta')) return 1;
@@ -796,7 +819,7 @@
                             valorA = getTipoPeso(a);
                             valorB = getTipoPeso(b);
                             break;
-                            
+
                         case 'tamanho':
                             if (a.querySelector('.item-pasta')) {
                                 valorA = Infinity;
@@ -804,7 +827,7 @@
                                 const tamanhoA = a.querySelector('.item-tamanho')?.textContent || '0 B';
                                 valorA = parseTamanho(tamanhoA);
                             }
-                            
+
                             if (b.querySelector('.item-pasta')) {
                                 valorB = Infinity;
                             } else {
@@ -812,7 +835,7 @@
                                 valorB = parseTamanho(tamanhoB);
                             }
                             break;
-                            
+
                         case 'data':
                             if (a.querySelector('.item-pasta')) {
                                 valorA = Infinity;
@@ -820,7 +843,7 @@
                                 const dataA = a.querySelector('.item-data')?.textContent || '';
                                 valorA = parseData(dataA);
                             }
-                            
+
                             if (b.querySelector('.item-pasta')) {
                                 valorB = Infinity;
                             } else {
@@ -828,94 +851,94 @@
                                 valorB = parseData(dataB);
                             }
                             break;
-                            
+
                         default:
                             return 0;
                     }
-                    
+
                     let comparacao = 0;
                     if (typeof valorA === 'string' && typeof valorB === 'string') {
                         comparacao = valorA.localeCompare(valorB);
                     } else {
                         comparacao = valorA - valorB;
                     }
-                    
+
                     return ordenacaoAtual.ordem === 'asc' ? comparacao : -comparacao;
                 });
-                
+
                 items.forEach(item => container.appendChild(item));
-                
+
                 setTimeout(() => {
                     isOrdenando = false;
                 }, 100);
-                
+
                 if (typeof window.updateItemCount === 'function') {
                     window.updateItemCount();
                 }
             }
-            
+
             Object.entries(ordenacaoBotoes).forEach(([criterio, btn]) => {
                 if (btn) {
-                    btn.addEventListener('click', function() {
+                    btn.addEventListener('click', function () {
                         const clicouNoMesmo = ordenacaoAtual.criterio === criterio;
-                        
+
                         if (clicouNoMesmo) {
                             ordenacaoAtual.ordem = ordenacaoAtual.ordem === 'asc' ? 'desc' : 'asc';
                         } else {
                             ordenacaoAtual.criterio = criterio;
                             ordenacaoAtual.ordem = 'asc';
                         }
-                        
+
                         try {
                             localStorage.setItem('ordenacao', JSON.stringify(ordenacaoAtual));
                         } catch (e) {
                             console.error('Erro ao salvar ordenação:', e);
                         }
-                        
+
                         atualizarBotoesOrdenacao();
                         ordenarItens();
                     });
                 }
             });
-            
+
             const searchInput = document.getElementById('pesquisa-input');
             if (searchInput) {
-                searchInput.addEventListener('input', function() {
+                searchInput.addEventListener('input', function () {
                     setTimeout(ordenarItens, 250);
                 });
             }
-            
+
             const container = document.querySelector('.listagem-itens');
             if (container) {
                 let timeoutId = null;
-                
-                const observer = new MutationObserver(function(mutations) {
+
+                const observer = new MutationObserver(function (mutations) {
                     if (isOrdenando) return;
-                    
-                    const foiPesquisa = mutations.some(m => 
+
+                    const foiPesquisa = mutations.some(m =>
                         m.type === 'attributes' && m.attributeName === 'style'
                     );
-                    
+
                     if (foiPesquisa) {
                         if (timeoutId) {
                             clearTimeout(timeoutId);
                         }
-                        
+
                         timeoutId = setTimeout(() => {
                             ordenarItens();
                             timeoutId = null;
                         }, 150);
                     }
                 });
-                
-                observer.observe(container, { 
-                    childList: true, 
-                    attributes: true, 
+
+                observer.observe(container, {
+                    childList: true,
+                    attributes: true,
                     subtree: true,
                     attributeFilter: ['style']
                 });
             }
-            
+
             setTimeout(() => {
                 atualizarBotoesOrdenacao();
                 ordenarItens();
@@ -923,12 +946,12 @@
         });
 
         // ===== NAVEGAÇÃO SIMPLES DOS CARDS =====
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Para cada card de pasta
             document.querySelectorAll('[data-tipo="pasta"]').forEach(card => {
-                card.addEventListener('click', function(e) {
+                card.addEventListener('click', function (e) {
                     // Se clicou em checkbox ou botões, não navega
-                    if (e.target.closest('.item-checkbox') || 
+                    if (e.target.closest('.item-checkbox') ||
                         e.target.closest('.item-checkbox-input') ||
                         e.target.closest('.botao-download') ||
                         e.target.closest('.botao-excluir') ||
@@ -936,18 +959,18 @@
                         e.target.closest('button')) {
                         return;
                     }
-                    
+
                     const caminho = this.dataset.caminho;
                     if (caminho) {
                         window.location.href = `/explorar/${caminho}`;
                     }
                 });
             });
-            
+
             // Para imagens (lightbox)
             document.querySelectorAll('[data-tipo="imagem"]').forEach(card => {
-                card.addEventListener('click', function(e) {
-                    if (e.target.closest('.item-checkbox') || 
+                card.addEventListener('click', function (e) {
+                    if (e.target.closest('.item-checkbox') ||
                         e.target.closest('.item-checkbox-input') ||
                         e.target.closest('.botao-download') ||
                         e.target.closest('.botao-excluir') ||
@@ -955,7 +978,7 @@
                         e.target.closest('button')) {
                         return;
                     }
-                    
+
                     // Disparar o lightbox (já existe)
                     const imgCard = this.querySelector('.item-imagem');
                     if (imgCard) {
@@ -964,11 +987,11 @@
                     }
                 });
             });
-            
+
             // Para áudios
             document.querySelectorAll('[data-tipo="audio"]').forEach(card => {
-                card.addEventListener('click', function(e) {
-                    if (e.target.closest('.item-checkbox') || 
+                card.addEventListener('click', function (e) {
+                    if (e.target.closest('.item-checkbox') ||
                         e.target.closest('.item-checkbox-input') ||
                         e.target.closest('.botao-download') ||
                         e.target.closest('.botao-excluir') ||
@@ -977,18 +1000,18 @@
                         e.target.closest('audio')) {
                         return;
                     }
-                    
+
                     const caminho = this.dataset.caminho;
                     if (caminho) {
                         window.location.href = `/visualizar/${caminho}`;
                     }
                 });
             });
-            
+
             // Para arquivos comuns
             document.querySelectorAll('[data-tipo="arquivo"]').forEach(card => {
-                card.addEventListener('click', function(e) {
-                    if (e.target.closest('.item-checkbox') || 
+                card.addEventListener('click', function (e) {
+                    if (e.target.closest('.item-checkbox') ||
                         e.target.closest('.item-checkbox-input') ||
                         e.target.closest('.botao-download') ||
                         e.target.closest('.botao-excluir') ||
@@ -996,7 +1019,7 @@
                         e.target.closest('button')) {
                         return;
                     }
-                    
+
                     const caminho = this.dataset.caminho;
                     if (caminho) {
                         window.location.href = `/download/${caminho}`;
@@ -1006,22 +1029,22 @@
         });
 
         // ===== SELEÇÃO MÚLTIPLA =====
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const selecaoBarra = document.getElementById('selecao-barra');
             const selecaoContador = document.getElementById('selecao-contador');
             const selecaoSelectAll = document.getElementById('selecao-select-all');
             const selecaoClear = document.getElementById('selecao-clear');
             const selecaoDelete = document.getElementById('selecao-delete');
             const selecaoDownload = document.getElementById('selecao-download');
-            
+
             let itensSelecionados = new Set();
             let processandoObserver = false;
-            
+
             function atualizarSelecao() {
                 const count = itensSelecionados.size;
                 selecaoContador.textContent = count;
                 selecaoBarra.style.display = count > 0 ? 'flex' : 'none';
-                
+
                 document.querySelectorAll('.item-link').forEach(item => {
                     const caminho = item.dataset.caminho;
                     if (itensSelecionados.has(caminho)) {
@@ -1031,7 +1054,7 @@
                     }
                 });
             }
-            
+
             // Função para configurar eventos nos checkboxes
             function configurarCheckbox(checkbox) {
                 // Remove eventos antigos (se houver)
@@ -1039,14 +1062,14 @@
                 // Adiciona evento novo
                 checkbox.addEventListener('change', handleCheckboxChange);
             }
-            
+
             // Handler separado para o evento change
             function handleCheckboxChange(e) {
                 e.stopPropagation();
                 const checkbox = e.target;
                 const caminho = checkbox.dataset.caminho;
                 const item = checkbox.closest('.item-link');
-                
+
                 if (checkbox.checked) {
                     itensSelecionados.add(caminho);
                     item.classList.add('selecionado');
@@ -1054,23 +1077,23 @@
                     itensSelecionados.delete(caminho);
                     item.classList.remove('selecionado');
                 }
-                
+
                 atualizarSelecao();
             }
-            
+
             // Configurar todos os checkboxes existentes
             document.querySelectorAll('.item-checkbox-input').forEach(configurarCheckbox);
-            
+
             // Botão selecionar todos
-            selecaoSelectAll.addEventListener('click', function() {
+            selecaoSelectAll.addEventListener('click', function () {
                 const checkboxes = document.querySelectorAll('.item-checkbox-input');
                 const todosSelecionados = Array.from(checkboxes).every(cb => cb.checked);
-                
+
                 checkboxes.forEach(checkbox => {
                     checkbox.checked = !todosSelecionados;
                     const caminho = checkbox.dataset.caminho;
                     const item = checkbox.closest('.item-link');
-                    
+
                     if (!todosSelecionados) {
                         itensSelecionados.add(caminho);
                         item.classList.add('selecionado');
@@ -1079,55 +1102,120 @@
                         item.classList.remove('selecionado');
                     }
                 });
-                
+
                 atualizarSelecao();
             });
-            
+
             // Botão limpar seleção
-            selecaoClear.addEventListener('click', function() {
+            selecaoClear.addEventListener('click', function () {
                 document.querySelectorAll('.item-checkbox-input').forEach(checkbox => {
                     checkbox.checked = false;
                     checkbox.closest('.item-link').classList.remove('selecionado');
                 });
-                
+
                 itensSelecionados.clear();
                 atualizarSelecao();
             });
-            
-            // Botão deletar selecionados
-            selecaoDelete.addEventListener('click', function() {
+
+            // Botão deletar selecionados - VERSÃO COM TOAST
+            selecaoDelete.addEventListener('click', async function (e) {
+                e.stopPropagation();
+
                 if (itensSelecionados.size === 0) return;
-                
-                const mensagem = itensSelecionados.size === 1 
+
+                const mensagem = itensSelecionados.size === 1
                     ? 'Tem certeza que deseja excluir este item?'
                     : `Tem certeza que deseja excluir ${itensSelecionados.size} itens?`;
-                
-                if (!confirm(mensagem)) return;
-                
-                const forms = [];
-                itensSelecionados.forEach(caminho => {
-                    const item = document.querySelector(`[data-caminho="${caminho}"]`);
-                    if (item) {
-                        const form = item.querySelector('.form-excluir');
-                        if (form) forms.push(form);
+
+                const detalhe = Array.from(itensSelecionados).slice(0, 5).join('\n');
+                const detalheCompleto = itensSelecionados.size > 5
+                    ? `${detalhe}\n... e mais ${itensSelecionados.size - 5} itens`
+                    : detalhe;
+
+                const confirmado = await ConfirmModal.open({
+                    title: 'Excluir itens selecionados',
+                    message: mensagem,
+                    detail: detalheCompleto
+                });
+
+                if (!confirmado) return;
+
+                // Mostrar loading no botão
+                const textoOriginal = selecaoDelete.innerHTML;
+                selecaoDelete.disabled = true;
+                selecaoDelete.innerHTML = '<span class="selecao-icon">⏳</span> Excluindo...';
+
+                try {
+                    const response = await fetch('/deletar_multiplos', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            caminhos: Array.from(itensSelecionados)
+                        })
+                    });
+
+                    const resultado = await response.json();
+
+                    if (resultado.sucesso) {
+                        // Mostrar toast de sucesso
+                        if (resultado.erros && resultado.erros.length > 0) {
+                            showToast(`✅ ${resultado.excluidos} itens excluídos\n❌ ${resultado.erros.length} falhas`, 'warning');
+                        } else {
+                            showToast(`✅ ${resultado.excluidos} itens excluídos com sucesso!`, 'success');
+                        }
+
+                        // Recarregar a página após um pequeno delay
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        showToast(`Erro: ${resultado.erro}`, 'error');
                     }
-                });
-                
-                forms.forEach((form, index) => {
-                    setTimeout(() => form.submit(), index * 500);
-                });
+                } catch (error) {
+                    console.error('Erro na exclusão:', error);
+                    showToast('Erro ao excluir itens. Tente novamente.', 'error');
+                } finally {
+                    // Restaurar botão
+                    selecaoDelete.disabled = false;
+                    selecaoDelete.innerHTML = textoOriginal;
+                }
             });
-            
-            // Botão download (placeholder)
-            selecaoDownload.addEventListener('click', function() {
+
+            // Botão download ZIP (substitua o placeholder existente)
+            selecaoDownload.addEventListener('click', function () {
                 if (itensSelecionados.size === 0) return;
-                alert('Download em ZIP será implementado em breve!');
+
+                // Criar formulário dinamicamente
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = "{{ url_for('download_zip') }}";
+                form.style.display = 'none';
+
+                // Adicionar cada caminho selecionado como input
+                itensSelecionados.forEach(caminho => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'caminhos';
+                    input.value = caminho;
+                    form.appendChild(input);
+                });
+
+                // Adicionar formulário ao body e submeter
+                document.body.appendChild(form);
+                form.submit();
+
+                // Limpar o formulário após o envio
+                setTimeout(() => {
+                    document.body.removeChild(form);
+                }, 1000);
             });
-            
+
             // ===== ATALHOS DE TECLADO =====
 
             // Ctrl+A para selecionar todos
-            document.addEventListener('keydown', function(e) {
+            document.addEventListener('keydown', function (e) {
                 if (e.ctrlKey && e.key === 'a') {
                     e.preventDefault();
                     e.stopPropagation();
@@ -1136,7 +1224,7 @@
             });
 
             // Delete para excluir selecionados
-            document.addEventListener('keydown', function(e) {
+            document.addEventListener('keydown', function (e) {
                 // Verifica se a tecla pressionada é Delete
                 if (e.key === 'Delete' || e.key === 'Del') {
                     // Verifica se há itens selecionados
@@ -1152,15 +1240,15 @@
                     }
                 }
             });
-            
+
             // Observer para novos checkboxes (pesquisa/ordenação) - VERSÃO SEM LOOP
-            const observer = new MutationObserver(function(mutations) {
+            const observer = new MutationObserver(function (mutations) {
                 // Evitar processamento múltiplo
                 if (processandoObserver) return;
                 processandoObserver = true;
-                
+
                 let temNovosCheckboxes = false;
-                
+
                 mutations.forEach(mutation => {
                     if (mutation.type === 'childList') {
                         mutation.addedNodes.forEach(node => {
@@ -1177,7 +1265,7 @@
                         });
                     }
                 });
-                
+
                 if (temNovosCheckboxes) {
                     // Configurar apenas os novos checkboxes, sem recriar tudo
                     document.querySelectorAll('.item-checkbox-input').forEach(checkbox => {
@@ -1188,13 +1276,13 @@
                         }
                     });
                 }
-                
+
                 // Liberar flag após um pequeno delay
                 setTimeout(() => {
                     processandoObserver = false;
                 }, 100);
             });
-            
+
             const container = document.querySelector('.listagem-itens');
             if (container) {
                 observer.observe(container, { childList: true, subtree: true });
@@ -1202,12 +1290,12 @@
         });
 
         // ===== ÍCONES DINÂMICOS (FALLBACK) =====
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Para ícones que não foram pegos pelo CSS, podemos adicionar lógica JS
             document.querySelectorAll('.file-icon').forEach(icon => {
                 const extensao = icon.dataset.extensao;
                 if (!extensao) return;
-                
+
                 // Mapeamento de extensões para ícones (fallback)
                 const iconMap = {
                     'pdf': '📕', 'doc': '📘', 'docx': '📘', 'xls': '📊', 'xlsx': '📊',
@@ -1221,7 +1309,7 @@
                     'exe': '⚙️', 'msi': '⚙️', 'bat': '📜', 'sh': '📜',
                     'sql': '🗄️', 'db': '🗄️', 'sqlite': '🗄️'
                 };
-                
+
                 // Se a extensão existir no mapa, substituir o conteúdo
                 if (iconMap[extensao]) {
                     // Só substitui se o ícone atual for o padrão 📄
@@ -1241,20 +1329,20 @@
             cancelBtn: document.getElementById('modalCancel'),
             confirmBtn: document.getElementById('modalConfirm'),
             closeBtn: document.getElementById('modalClose'),
-            
+
             resolvePromise: null,
-            
+
             init() {
                 // Event listeners
                 this.cancelBtn.addEventListener('click', () => this.close(false));
                 this.confirmBtn.addEventListener('click', () => this.close(true));
                 this.closeBtn.addEventListener('click', () => this.close(false));
-                
+
                 // Fechar ao clicar no overlay
                 this.modal.addEventListener('click', (e) => {
                     if (e.target === this.modal) this.close(false);
                 });
-                
+
                 // Fechar com ESC
                 document.addEventListener('keydown', (e) => {
                     if (e.key === 'Escape' && this.modal.style.display === 'flex') {
@@ -1262,32 +1350,32 @@
                     }
                 });
             },
-            
+
             open(options = {}) {
-                const { 
-                    title = 'Confirmar exclusão', 
+                const {
+                    title = 'Confirmar exclusão',
                     message = 'Tem certeza que deseja excluir este item?',
                     detail = ''
                 } = options;
-                
+
                 this.title.textContent = title;
                 this.message.textContent = message;
-                
+
                 if (detail) {
                     this.detail.textContent = detail;
                     this.detail.style.display = 'block';
                 } else {
                     this.detail.style.display = 'none';
                 }
-                
+
                 this.modal.style.display = 'flex';
                 document.body.style.overflow = 'hidden';
-                
+
                 return new Promise((resolve) => {
                     this.resolvePromise = resolve;
                 });
             },
-            
+
             close(result) {
                 this.modal.style.display = 'none';
                 document.body.style.overflow = '';
@@ -1302,7 +1390,7 @@
         ConfirmModal.init();
 
         // Substituir funções de confirmação
-        window.confirmarExclusao = async function(nomeArquivo) {
+        window.confirmarExclusao = async function (nomeArquivo) {
             const result = await ConfirmModal.open({
                 title: 'Excluir arquivo',
                 message: `Tem certeza que deseja excluir este arquivo?`,
@@ -1311,7 +1399,7 @@
             return result;
         };
 
-        window.confirmarExclusaoPasta = async function(nomePasta) {
+        window.confirmarExclusaoPasta = async function (nomePasta) {
             const result = await ConfirmModal.open({
                 title: '⚠️ Excluir pasta',
                 message: 'ATENÇÃO! Todos os arquivos dentro dela serão apagados permanentemente.',
@@ -1323,27 +1411,27 @@
         // Modificar a seleção múltipla para usar o modal
         const originalDeleteClick = selecaoDelete?.click;
         if (selecaoDelete) {
-            selecaoDelete.addEventListener('click', async function(e) {
+            selecaoDelete.addEventListener('click', async function (e) {
                 e.stopPropagation();
                 if (itensSelecionados.size === 0) return;
-                
-                const mensagem = itensSelecionados.size === 1 
+
+                const mensagem = itensSelecionados.size === 1
                     ? 'Tem certeza que deseja excluir este item?'
                     : `Tem certeza que deseja excluir ${itensSelecionados.size} itens?`;
-                
+
                 const detalhe = Array.from(itensSelecionados).slice(0, 5).join('\n');
-                const detalheCompleto = itensSelecionados.size > 5 
+                const detalheCompleto = itensSelecionados.size > 5
                     ? `${detalhe}\n... e mais ${itensSelecionados.size - 5} itens`
                     : detalhe;
-                
+
                 const confirmado = await ConfirmModal.open({
                     title: 'Excluir itens selecionados',
                     message: mensagem,
                     detail: detalheCompleto
                 });
-                
+
                 if (!confirmado) return;
-                
+
                 const forms = [];
                 itensSelecionados.forEach(caminho => {
                     const item = document.querySelector(`[data-caminho="${caminho}"]`);
@@ -1352,12 +1440,45 @@
                         if (form) forms.push(form);
                     }
                 });
-                
+
                 forms.forEach((form, index) => {
                     setTimeout(() => form.submit(), index * 500);
                 });
             });
         }
+        // ===== TOAST NOTIFICATION =====
+        function showToast(message, type = 'success', duration = 3000) {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toast-icon');
+            const toastMessage = document.getElementById('toast-message');
+
+            // Definir ícone baseado no tipo
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+
+            // Remover classes anteriores
+            toast.classList.remove('success', 'error', 'warning', 'info');
+
+            // Adicionar classe do tipo
+            toast.classList.add(type);
+
+            // Atualizar conteúdo
+            toastIcon.textContent = icons[type] || '✅';
+            toastMessage.textContent = message;
+
+            // Mostrar toast
+            toast.style.display = 'block';
+
+            // Remover após duration
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, duration);
+        }
     </script>
 </body>
+
 </html>

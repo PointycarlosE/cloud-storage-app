@@ -3,11 +3,14 @@ from werkzeug.utils import secure_filename
 import shutil
 import os
 import datetime
+import zipfile
+import tempfile
+from flask import send_file
 
 app = Flask(__name__)
 
 # Defina a pasta base corretamente
-PASTA_BASE = os.path.abspath("C:/Users")
+PASTA_BASE = os.path.abspath("C:/Users\cacae\REPOSITORIO")
 
 # -------- HOME --------
 @app.route('/')
@@ -169,7 +172,65 @@ def download(caminho_arquivo):
     # Envia o arquivo para download
     return send_from_directory(pasta, nome_arquivo, as_attachment=True)
 
-# -------- UPLOAD DE ARQUIVOS --------
+# -------- DOWNLOAD EM ZIP --------
+@app.route('/download_zip', methods=['POST'])
+def download_zip():
+    temp_zip = None
+    try:
+        # Receber a lista de caminhos do formulário
+        caminhos = request.form.getlist('caminhos')
+        
+        if not caminhos:
+            return "Nenhum arquivo selecionado", 400
+        
+        # Criar arquivo temporário
+        temp_zip = tempfile.NamedTemporaryFile(suffix='.zip', delete=False)
+        temp_zip.close()
+        
+        # Criar arquivo ZIP
+        with zipfile.ZipFile(temp_zip.name, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for caminho_relativo in caminhos:
+                caminho_absoluto = os.path.abspath(os.path.join(PASTA_BASE, caminho_relativo))
+                
+                # Verificar segurança
+                if os.path.commonpath([PASTA_BASE, caminho_absoluto]) != PASTA_BASE:
+                    print(f"Tentativa de acesso fora da pasta base: {caminho_absoluto}")
+                    continue
+                
+                if os.path.exists(caminho_absoluto):
+                    if os.path.isfile(caminho_absoluto):
+                        # Adicionar arquivo ao ZIP
+                        zipf.write(caminho_absoluto, caminho_relativo)
+                    elif os.path.isdir(caminho_absoluto):
+                        # Adicionar pasta e todo seu conteúdo
+                        for root, dirs, files in os.walk(caminho_absoluto):
+                            for file in files:
+                                file_path = os.path.join(root, file)
+                                # Calcular caminho relativo dentro do ZIP
+                                rel_path = os.path.relpath(file_path, PASTA_BASE)
+                                zipf.write(file_path, rel_path)
+        
+        # Enviar arquivo para download
+        return send_file(
+            temp_zip.name,
+            as_attachment=True,
+            download_name='arquivos_selecionados.zip',
+            mimetype='application/zip'
+        )
+    
+    except Exception as e:
+        print(f"Erro ao criar ZIP: {str(e)}")
+        return f"Erro ao criar ZIP: {str(e)}", 500
+    
+    finally:
+        # Limpar arquivo temporário
+        if temp_zip and os.path.exists(temp_zip.name):
+            try:
+                os.unlink(temp_zip.name)
+            except:
+                pass
+
+# -------- UPLOAD DE ARQUIVOS (MÚLTIPLO) --------
 @app.route('/upload/<path:caminho>', methods=['POST'])
 @app.route('/upload/', defaults={'caminho': ''}, methods=['POST'])
 def upload(caminho):
@@ -185,27 +246,41 @@ def upload(caminho):
     if 'arquivo' not in request.files:
         return "Nenhum arquivo enviado", 400
 
-    arquivo = request.files['arquivo']
+    arquivos = request.files.getlist('arquivo')  # Pega lista de arquivos
+    
+    if not arquivos or arquivos[0].filename == '':
+        return "Nenhum arquivo válido", 400
 
-    if arquivo.filename == '':
-        return "Arquivo inválido", 400
+    arquivos_enviados = 0
+    erros = []
 
-    #  Remove caracteres perigosos do nome
-    nome_seguro = secure_filename(arquivo.filename)
+    for arquivo in arquivos:
+        if arquivo.filename == '':
+            continue
 
-    caminho_final = os.path.join(pasta_destino, nome_seguro)
+        # Remove caracteres perigosos do nome
+        nome_seguro = secure_filename(arquivo.filename)
+        caminho_final = os.path.join(pasta_destino, nome_seguro)
 
-    #  Evita sobrescrever arquivos existentes
-    contador = 1
-    nome_base, extensao = os.path.splitext(nome_seguro)
+        # Evita sobrescrever arquivos existentes
+        contador = 1
+        nome_base, extensao = os.path.splitext(nome_seguro)
 
-    while os.path.exists(caminho_final):
-        novo_nome = f"{nome_base}_{contador}{extensao}"
-        caminho_final = os.path.join(pasta_destino, novo_nome)
-        contador += 1
+        while os.path.exists(caminho_final):
+            novo_nome = f"{nome_base}_{contador}{extensao}"
+            caminho_final = os.path.join(pasta_destino, novo_nome)
+            contador += 1
 
-    arquivo.save(caminho_final)
+        try:
+            arquivo.save(caminho_final)
+            arquivos_enviados += 1
+        except Exception as e:
+            erros.append(f"{arquivo.filename}: {str(e)}")
 
+    # Mensagem de feedback (pode ser melhorada depois)
+    if erros:
+        print(f"Erros no upload: {erros}")
+    
     return redirect(url_for('explorar', caminho=caminho))
 
 # -------- DELETAR ARQUIVO --------
@@ -301,6 +376,52 @@ def deletar_pasta(caminho_pasta):
     pasta_pai = os.path.dirname(caminho_pasta)
 
     return redirect(url_for('explorar', caminho=pasta_pai))
+
+# -------- DELETAR MÚLTIPLOS ARQUIVOS/PASTAS --------
+@app.route('/deletar_multiplos', methods=['POST'])
+def deletar_multiplos():
+    try:
+        dados = request.get_json()
+        caminhos = dados.get('caminhos', [])
+        
+        if not caminhos:
+            return {'sucesso': False, 'erro': 'Nenhum item selecionado'}, 400
+        
+        erros = []
+        sucessos = []
+        
+        for caminho_relativo in caminhos:
+            caminho_completo = os.path.abspath(os.path.join(PASTA_BASE, caminho_relativo))
+            
+            # 🔐 Segurança: impedir sair da pasta base
+            if os.path.commonpath([PASTA_BASE, caminho_completo]) != PASTA_BASE:
+                erros.append(f"{caminho_relativo}: Acesso negado")
+                continue
+            
+            if not os.path.exists(caminho_completo):
+                erros.append(f"{caminho_relativo}: Não encontrado")
+                continue
+            
+            try:
+                if os.path.isfile(caminho_completo):
+                    os.remove(caminho_completo)
+                    sucessos.append(caminho_relativo)
+                elif os.path.isdir(caminho_completo):
+                    shutil.rmtree(caminho_completo)
+                    sucessos.append(caminho_relativo)
+            except Exception as e:
+                erros.append(f"{caminho_relativo}: {str(e)}")
+        
+        return {
+            'sucesso': True,
+            'sucessos': sucessos,
+            'erros': erros,
+            'total': len(caminhos),
+            'excluidos': len(sucessos)
+        }
+    
+    except Exception as e:
+        return {'sucesso': False, 'erro': str(e)}, 500
 
 # -------- VISUALIZAR ARQUIVO --------
 @app.route('/visualizar/<path:caminho_arquivo>')
