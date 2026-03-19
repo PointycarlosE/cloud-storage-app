@@ -93,15 +93,6 @@
             </div>
         </div>
 
-        <!-- Botão voltar -->
-        {% if pasta_pai is not none %}
-        <div class="voltar-wrapper">
-            <a href="{{ url_for('file.explorar', caminho=pasta_pai) }}" class="botao-voltar">
-                ⬅️ Voltar para pasta anterior
-            </a>
-        </div>
-        {% endif %}
-
         <!-- Barra de pesquisa -->
         <div class="pesquisa-wrapper">
             <div class="pesquisa-container">
@@ -148,6 +139,15 @@
             </div>
             <span class="view-info">Itens: <span id="view-total-itens">0</span></span>
         </div>
+        
+        <!-- Botão voltar -->
+        {% if pasta_pai is not none %}
+        <div class="voltar-wrapper">
+            <a href="{{ url_for('file.explorar', caminho=pasta_pai) }}" class="botao-voltar">
+                ⬅️ Voltar para pasta anterior
+            </a>
+        </div>
+        {% endif %}
 
         <!-- Barra de seleção múltipla (inicialmente oculta) -->
         <div id="selecao-barra" class="selecao-barra" style="display: none;">

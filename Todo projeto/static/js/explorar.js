@@ -909,3 +909,22 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
+// ===== SALVAR POSIÇÃO DA ROLAGEM =====
+(function() {
+    // Salvar posição antes de sair da página
+    window.addEventListener('beforeunload', function() {
+        sessionStorage.setItem('scrollPosition', window.scrollY);
+    });
+    
+    // Restaurar posição quando a página carregar
+    window.addEventListener('load', function() {
+        const savedPosition = sessionStorage.getItem('scrollPosition');
+        if (savedPosition) {
+            // Pequeno delay para garantir que a página renderizou
+            setTimeout(function() {
+                window.scrollTo(0, parseInt(savedPosition));
+                sessionStorage.removeItem('scrollPosition'); // Limpar depois de usar
+            }, 100);
+        }
+    });
+})();
