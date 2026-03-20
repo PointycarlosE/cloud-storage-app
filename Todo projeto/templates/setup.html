@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuração Inicial - Meu Drive Pessoal</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+
+    <script>
+        (function () {
+            try {
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            } catch (e) {
+                console.log('Erro ao acessar localStorage:', e);
+            }
+        })();
+    </script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <main class="conteudo-principal">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <h1 class="login-title">🎉 Bem-vindo ao Meu Drive Pessoal!</h1>
+                    <p class="login-subtitle">Vamos criar sua conta de administrador</p>
+                </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+
+                <form method="POST" class="login-form">
+                    <div class="form-group">
+                        <label for="username" class="form-label">👤 Nome de usuário</label>
+                        <input type="text" name="username" id="username" class="form-input" placeholder="admin" required
+                            autofocus>
+                        <small style="color: var(--cor-texto-secundario); font-size: 0.7rem;">
+                            Será usado para fazer login
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password" class="form-label">🔒 Senha</label>
+                        <input type="password" name="password" id="password" class="form-input"
+                            placeholder="Digite uma senha segura" required>
+                        <small style="color: var(--cor-texto-secundario); font-size: 0.7rem;">
+                            Mínimo 6 caracteres
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm_password" class="form-label">✓ Confirmar senha</label>
+                        <input type="password" name="confirm_password" id="confirm_password" class="form-input"
+                            placeholder="Digite a senha novamente" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="repo_path" class="form-label">📁 Pasta do repositório</label>
+                        <input type="text" name="repo_path" id="repo_path" class="form-input"
+                            placeholder="C:\Users\SeuUsuario\MeusArquivos" required>
+                        <small style="color: var(--cor-texto-secundario); font-size: 0.7rem;">
+                            Exemplo: C:\Users\cacae\REPOSITORIO<br>
+                            Você pode copiar e colar o caminho direto do Windows Explorer
+                        </small>
+                    </div>
+
+                    <button type="submit" class="botao botao-primario login-btn">
+                        🚀 Criar conta e começar
+                    </button>
+                </form>
+
+                <div class="login-footer">
+                    <p>Esta configuração será feita apenas uma vez</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Validação de senha
+        const form = document.querySelector('form');
+        const password = document.getElementById('password');
+        const confirm = document.getElementById('confirm_password');
+        const repoPath = document.getElementById('repo_path');
+
+        form.addEventListener('submit', function (e) {
+            if (password.value !== confirm.value) {
+                e.preventDefault();
+                alert('As senhas não coincidem!');
+                confirm.focus();
+                return false;
+            }
+
+            if (password.value.length < 6) {
+                e.preventDefault();
+                alert('A senha deve ter pelo menos 6 caracteres!');
+                password.focus();
+                return false;
+            }
+
+            // Sugestão: avisar se o caminho parece estranho
+            if (repoPath.value && !repoPath.value.includes('/') && !repoPath.value.includes('\\')) {
+                if (!confirm('O caminho parece incompleto. Deseja continuar mesmo assim?')) {
+                    e.preventDefault();
+                    repoPath.focus();
+                    return false;
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

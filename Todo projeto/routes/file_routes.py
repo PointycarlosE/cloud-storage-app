@@ -17,6 +17,18 @@ file_bp = Blueprint('file', __name__)
 @login_required_optional
 def explorar(caminho=""):
     try:
+        # DEBUG: Mostrar o que está sendo usado
+        print("=" * 50)
+        print("DEBUG - Explorador chamado")
+        print(f"caminho: {caminho}")
+        print(f"PASTA_BASE (do config): {PASTA_BASE}")
+        
+        # Monta caminho absoluto
+        pasta_atual = os.path.abspath(os.path.join(PASTA_BASE, caminho))
+        print(f"pasta_atual: {pasta_atual}")
+        print(f"Existe? {os.path.exists(pasta_atual)}")
+        print("=" * 50)
+        
         # Monta caminho absoluto
         pasta_atual = os.path.abspath(os.path.join(PASTA_BASE, caminho))
 
