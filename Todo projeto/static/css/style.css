@@ -2157,6 +2157,114 @@ body {
     color: #90caf9;
 }
 
+/* ===== VALIDAÇÃO DE FORMULÁRIOS ===== */
+.form-input.error {
+    border-color: #d32f2f !important;
+    background-color: #ffebee !important;
+}
+
+.form-error {
+    color: #d32f2f;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    display: none;
+}
+
+/* ===== CHECKBOX PERSONALIZADO ===== */
+.form-checkbox {
+    display: flex;
+    align-items: center;
+    margin: 0.5rem 0;
+}
+
+.checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--cor-texto);
+    position: relative;
+    user-select: none;
+}
+
+/* Esconder o checkbox padrão */
+.checkbox-label input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* Criar o checkbox customizado */
+.checkbox-custom {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background-color: white;
+    border: 2px solid var(--cor-borda);
+    border-radius: 4px;
+    position: relative;
+    transition: var(--transicao);
+    cursor: pointer;
+}
+
+/* Efeito hover */
+.checkbox-label:hover .checkbox-custom {
+    border-color: var(--cor-primaria);
+    background-color: rgba(26, 115, 232, 0.05);
+}
+
+/* Estado marcado */
+.checkbox-label input:checked + .checkbox-custom {
+    background-color: var(--cor-primaria);
+    border-color: var(--cor-primaria);
+}
+
+/* Checkmark */
+.checkbox-label input:checked + .checkbox-custom::after {
+    content: "✓";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+}
+
+/* Foco no checkbox */
+.checkbox-label input:focus + .checkbox-custom {
+    box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+}
+
+/* Texto do checkbox */
+.checkbox-text {
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--cor-texto);
+}
+
+/* Tema escuro */
+[data-theme="dark"] .checkbox-custom {
+    background-color: #3c3e40;
+    border-color: var(--cor-borda);
+}
+
+[data-theme="dark"] .checkbox-label:hover .checkbox-custom {
+    border-color: var(--cor-primaria);
+    background-color: rgba(138, 180, 248, 0.1);
+}
+
+[data-theme="dark"] .checkbox-label input:checked + .checkbox-custom {
+    background-color: var(--cor-primaria);
+    border-color: var(--cor-primaria);
+}
+
+[data-theme="dark"] .checkbox-text {
+    color: var(--cor-texto);
+}
+
 /* Responsividade */
 @media (max-width: 480px) {
     .login-card {

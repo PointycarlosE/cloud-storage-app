@@ -41,17 +41,27 @@
                 {% endif %}
                 {% endwith %}
 
-                <form method="POST" class="login-form">
+                <form method="POST" class="login-form" id="login-form">
                     <div class="form-group">
                         <label for="username" class="form-label">👤 Usuário</label>
                         <input type="text" name="username" id="username" class="form-input"
-                            placeholder="Digite seu usuário" required autofocus>
+                            placeholder="Digite seu usuário" autofocus>
+                        <div class="form-error" id="username-error"></div>
                     </div>
 
                     <div class="form-group">
                         <label for="password" class="form-label">🔒 Senha</label>
                         <input type="password" name="password" id="password" class="form-input"
-                            placeholder="Digite sua senha" required>
+                            placeholder="Digite sua senha">
+                        <div class="form-error" id="password-error"></div>
+                    </div>
+
+                    <div class="form-group form-checkbox">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="remember" id="remember">
+                            <span class="checkbox-custom"></span>
+                            <span class="checkbox-text">Lembrar de mim</span>
+                        </label>
                     </div>
 
                     <button type="submit" class="botao botao-primario login-btn">
@@ -67,6 +77,75 @@
     </main>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+    <script>
+        // Validação inline no login
+        const loginForm = document.getElementById('login-form');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const usernameError = document.getElementById('username-error');
+        const passwordError = document.getElementById('password-error');
+
+        function showError(element, errorDiv, message) {
+            element.classList.add('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function clearError(element, errorDiv) {
+            element.classList.remove('error');
+            errorDiv.textContent = '';
+            errorDiv.style.display = 'none';
+        }
+
+        function validateLoginForm() {
+            let isValid = true;
+
+            // Validar usuário
+            if (!usernameInput.value.trim()) {
+                showError(usernameInput, usernameError, 'Digite seu nome de usuário');
+                isValid = false;
+            } else {
+                clearError(usernameInput, usernameError);
+            }
+
+            // Validar senha
+            if (!passwordInput.value) {
+                showError(passwordInput, passwordError, 'Digite sua senha');
+                isValid = false;
+            } else if (passwordInput.value.length < 6) {
+                showError(passwordInput, passwordError, 'A senha deve ter pelo menos 6 caracteres');
+                isValid = false;
+            } else {
+                clearError(passwordInput, passwordError);
+            }
+
+            return isValid;
+        }
+
+        loginForm.addEventListener('submit', function (e) {
+            if (!validateLoginForm()) {
+                e.preventDefault();
+            }
+        });
+
+        // Limpar erro ao digitar
+        usernameInput.addEventListener('input', function () {
+            if (usernameInput.value.trim()) {
+                clearError(usernameInput, usernameError);
+            }
+        });
+
+        passwordInput.addEventListener('input', function () {
+            if (passwordInput.value && passwordInput.value.length >= 6) {
+                clearError(passwordInput, passwordError);
+            } else if (passwordInput.value && passwordInput.value.length < 6) {
+                showError(passwordInput, passwordError, 'A senha deve ter pelo menos 6 caracteres');
+            } else if (!passwordInput.value) {
+                showError(passwordInput, passwordError, 'Digite sua senha');
+            }
+        });
+    </script>
 </body>
 
 </html>

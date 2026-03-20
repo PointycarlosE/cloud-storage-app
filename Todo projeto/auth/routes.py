@@ -14,10 +14,10 @@ auth_bp = Blueprint('auth', __name__)
 login_attempts = {}
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
+# auth/routes.py
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     """Página de login com proteção contra força bruta"""
-    # Se já estiver logado, redireciona para o explorador
     if current_user.is_authenticated:
         return redirect(url_for('file.explorar'))
     
@@ -32,14 +32,17 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '')
+        remember = request.form.get('remember', False) == 'on'  # NOVO
         
         user = User.get(username)
         
         if user and user.check_password(password):
-            # Login bem-sucedido - limpar tentativas
+            # Login bem-sucedido
             login_attempts.pop(client_ip, None)
             
-            login_user(user, remember=True, duration=timedelta(days=7))
+            # Login com opção "lembrar de mim"
+            login_user(user, remember=remember, duration=timedelta(days=30 if remember else 1))
+            
             next_page = request.args.get('next', url_for('file.explorar'))
             return redirect(next_page)
         else:
