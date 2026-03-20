@@ -7,12 +7,14 @@ from flask import render_template, abort, redirect, url_for, request, send_from_
 from werkzeug.utils import secure_filename
 from config import PASTA_BASE
 from utils.helpers import get_info_arquivo
+from auth.decorators import login_required_optional  # NOVA IMPORTAÇÃO
 
 file_bp = Blueprint('file', __name__)
 
 # -------- EXPLORADOR --------
 @file_bp.route('/explorar/')
 @file_bp.route('/explorar/<path:caminho>')
+@login_required_optional
 def explorar(caminho=""):
     try:
         # Monta caminho absoluto
@@ -86,6 +88,7 @@ def explorar(caminho=""):
 
 # -------- DOWNLOAD INDIVIDUAL --------
 @file_bp.route('/download/<path:caminho_arquivo>')
+@login_required_optional
 def download(caminho_arquivo):
     caminho_completo = os.path.abspath(os.path.join(PASTA_BASE, caminho_arquivo))
 
@@ -100,6 +103,7 @@ def download(caminho_arquivo):
 
 # -------- VISUALIZAR ARQUIVO --------
 @file_bp.route('/visualizar/<path:caminho_arquivo>')
+@login_required_optional
 def visualizar_arquivo(caminho_arquivo):
     caminho_completo = os.path.abspath(os.path.join(PASTA_BASE, caminho_arquivo))
 
@@ -115,6 +119,7 @@ def visualizar_arquivo(caminho_arquivo):
 # -------- UPLOAD DE ARQUIVOS --------
 @file_bp.route('/upload/<path:caminho>', methods=['POST'])
 @file_bp.route('/upload/', defaults={'caminho': ''}, methods=['POST'])
+@login_required_optional
 def upload(caminho):
     pasta_destino = os.path.abspath(os.path.join(PASTA_BASE, caminho))
 
@@ -152,6 +157,7 @@ def upload(caminho):
 # -------- CRIAR PASTA --------
 @file_bp.route('/criar_pasta/<path:caminho>', methods=['POST'])
 @file_bp.route('/criar_pasta/', defaults={'caminho': ''}, methods=['POST'])
+@login_required_optional
 def criar_pasta(caminho):
     pasta_atual = os.path.abspath(os.path.join(PASTA_BASE, caminho))
 
@@ -178,6 +184,7 @@ def criar_pasta(caminho):
 
 # -------- DELETAR ARQUIVO --------
 @file_bp.route('/deletar/<path:caminho_arquivo>', methods=['POST'])
+@login_required_optional
 def deletar_arquivo(caminho_arquivo):
     caminho_completo = os.path.abspath(os.path.join(PASTA_BASE, caminho_arquivo))
 
@@ -196,6 +203,7 @@ def deletar_arquivo(caminho_arquivo):
 
 # -------- DELETAR PASTA --------
 @file_bp.route('/deletar_pasta/<path:caminho_pasta>', methods=['POST'])
+@login_required_optional
 def deletar_pasta(caminho_pasta):
     pasta_completa = os.path.abspath(os.path.join(PASTA_BASE, caminho_pasta))
 
@@ -214,6 +222,7 @@ def deletar_pasta(caminho_pasta):
 
 # -------- DELETAR MÚLTIPLOS (AJAX) --------
 @file_bp.route('/deletar_multiplos', methods=['POST'])
+@login_required_optional
 def deletar_multiplos():
     try:
         dados = request.get_json()
@@ -259,6 +268,7 @@ def deletar_multiplos():
 
 # -------- DOWNLOAD EM ZIP --------
 @file_bp.route('/download_zip', methods=['POST'])
+@login_required_optional
 def download_zip():
     temp_zip = None
     try:

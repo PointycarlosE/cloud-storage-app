@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Meu Drive Pessoal</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+
+    <!-- Script de tema ANTES do CSS -->
+    <script>
+        (function () {
+            try {
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                document.documentElement.setAttribute('data-theme', savedTheme);
+                window.__initialTheme = savedTheme;
+            } catch (e) {
+                console.log('Erro ao acessar localStorage:', e);
+            }
+        })();
+    </script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <main class="conteudo-principal">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <h1 class="login-title">📁 Meu Drive Pessoal</h1>
+                    <p class="login-subtitle">Faça login para acessar seus arquivos</p>
+                </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+
+                <form method="POST" class="login-form">
+                    <div class="form-group">
+                        <label for="username" class="form-label">👤 Usuário</label>
+                        <input type="text" name="username" id="username" class="form-input"
+                            placeholder="Digite seu usuário" required autofocus>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password" class="form-label">🔒 Senha</label>
+                        <input type="password" name="password" id="password" class="form-input"
+                            placeholder="Digite sua senha" required>
+                    </div>
+
+                    <button type="submit" class="botao botao-primario login-btn">
+                        🚀 Entrar
+                    </button>
+                </form>
+
+                <div class="login-footer">
+                    <p>Meu Drive Pessoal © 2024</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+
+</html>

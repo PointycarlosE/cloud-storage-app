@@ -37,10 +37,19 @@
             </ul>
         </nav>
 
-        <!-- Botão de tema -->
-        <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema">
-            <span class="theme-icon">☀️</span>
-        </button>
+        <div style="display: flex; align-items: center; gap: 0.8rem;">
+            <!-- Botão de tema -->
+            <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema">
+                <span class="theme-icon">☀️</span>
+            </button>
+
+            <!-- Botão de logout (só aparece se autenticado) -->
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('auth.logout') }}" class="logout-btn" title="Sair">
+                <span class="logout-icon">🚪</span>
+            </a>
+            {% endif %}
+        </div>
     </header>
 
     <main class="conteudo-principal">
@@ -139,7 +148,7 @@
             </div>
             <span class="view-info">Itens: <span id="view-total-itens">0</span></span>
         </div>
-        
+
         <!-- Botão voltar -->
         {% if pasta_pai is not none %}
         <div class="voltar-wrapper">
