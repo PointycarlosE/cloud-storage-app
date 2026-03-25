@@ -102,7 +102,11 @@ source venv/bin/activate
 
 # 4. Instale as dependências
 ```bash
-pip install -r requirements.txt
+pip install Flask
+pip install Wekzeug
+pip install Flask-Login
+pip install dotenv
+
 ```
 ---
 ### Primeira Execução
