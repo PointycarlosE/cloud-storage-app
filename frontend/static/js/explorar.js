@@ -1,14 +1,3 @@
-function confirmarExclusao(nomeArquivo) {
-    return confirm("Tem certeza que deseja excluir o arquivo: " + nomeArquivo + " ?");
-}
-
-function confirmarExclusaoPasta(nomePasta) {
-    return confirm(
-        "ATENÇÃO!\n\nVocê está prestes a excluir a pasta: " + nomePasta +
-        "\n\nTODOS os arquivos dentro dela serão apagados permanentemente.\n\nDeseja continuar?"
-    );
-}
-
 // Lightbox para imagens
 document.addEventListener('DOMContentLoaded', function () {
     const lightbox = document.getElementById('lightbox');
@@ -60,13 +49,35 @@ document.addEventListener('DOMContentLoaded', function () {
         lightboxInfo.textContent = `Imagem ${currentImageIndex + 1} de ${images.length}`;
         lightboxDownload.href = image.downloadUrl;
 
-        lightboxDelete.onclick = function (e) {
+        // Lightbox - botão de excluir
+        lightboxDelete.onclick = async function (e) {
             e.preventDefault();
-            if (confirm(`Tem certeza que deseja excluir a imagem: ${image.nome}?`)) {
+            const image = images[currentImageIndex];
+
+            // Usar o modal personalizado
+            const confirmado = await ConfirmModal.open({
+                title: 'Excluir imagem',
+                message: `Tem certeza que deseja excluir a imagem "${image.nome}"?`,
+                detail: 'Esta ação não pode ser desfeita.'
+            });
+
+            if (confirmado) {
                 if (image.deleteForm) {
+                    showToast(`Excluindo ${image.nome}...`, 'info', 2000);
+
+                    // Clonar o formulário e submeter
                     const form = image.deleteForm.cloneNode(true);
                     document.body.appendChild(form);
+
+                    // Submeter o formulário clonado
                     form.submit();
+
+                    // Remover o formulário após um pequeno delay
+                    setTimeout(() => {
+                        if (document.body.contains(form)) {
+                            document.body.removeChild(form);
+                        }
+                    }, 1000);
                 }
             }
         };
@@ -910,21 +921,147 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // ===== SALVAR POSIÇÃO DA ROLAGEM =====
-(function() {
+(function () {
     // Salvar posição antes de sair da página
-    window.addEventListener('beforeunload', function() {
+    window.addEventListener('beforeunload', function () {
         sessionStorage.setItem('scrollPosition', window.scrollY);
     });
-    
+
     // Restaurar posição quando a página carregar
-    window.addEventListener('load', function() {
+    window.addEventListener('load', function () {
         const savedPosition = sessionStorage.getItem('scrollPosition');
         if (savedPosition) {
             // Pequeno delay para garantir que a página renderizou
-            setTimeout(function() {
+            setTimeout(function () {
                 window.scrollTo(0, parseInt(savedPosition));
                 sessionStorage.removeItem('scrollPosition'); // Limpar depois de usar
             }, 100);
         }
     });
 })();
+
+document.addEventListener('DOMContentLoaded', function () {
+    const overlay = document.getElementById('global-drop-overlay');
+    const progressContainer = document.getElementById('upload-progress');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+
+    let dragCounter = 0;
+
+    // 🔥 Detecta entrada de arquivos
+    document.addEventListener('dragenter', (e) => {
+        if (e.dataTransfer.types.includes('Files')) {
+            dragCounter++;
+            overlay.classList.add('active');
+        }
+    });
+
+    document.addEventListener('dragleave', () => {
+        dragCounter--;
+        if (dragCounter <= 0) {
+            overlay.classList.remove('active');
+        }
+    });
+
+    document.addEventListener('dragover', (e) => {
+        e.preventDefault();
+    });
+
+    document.addEventListener('drop', (e) => {
+        e.preventDefault();
+
+        overlay.classList.remove('active');
+        dragCounter = 0;
+
+        const files = e.dataTransfer.files;
+        uploadFiles(files);
+    });
+
+    function uploadFiles(files) {
+        if (!files.length) return;
+
+        const panel = document.getElementById('upload-panel');
+        const list = document.getElementById('upload-list');
+
+        panel.style.display = 'flex';
+
+        const caminho = window.location.pathname.replace('/explorar', '');
+
+        Array.from(files).forEach(file => {
+            const item = document.createElement('div');
+            item.className = 'upload-item';
+
+            item.innerHTML = `
+            <div class="upload-name">${file.name}</div>
+            <div class="upload-bar">
+                <div class="upload-fill"></div>
+            </div>
+            <div class="upload-status">Enviando...</div>
+        `;
+
+            list.appendChild(item);
+
+            const fill = item.querySelector('.upload-fill');
+            const status = item.querySelector('.upload-status');
+
+            const formData = new FormData();
+            formData.append('arquivo', file);
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', `/upload${caminho}`, true);
+
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    fill.style.width = percent + '%';
+                }
+            });
+
+            xhr.onload = () => {
+                if (xhr.status === 200) {
+                    fill.style.width = '100%';
+                    status.textContent = 'Concluído';
+                    item.classList.add('success');
+
+                    showToast(`"${file.name}" enviado`, 'success');
+                } else {
+                    status.textContent = 'Erro no upload';
+                    item.classList.add('error');
+
+                    showToast(`Erro ao enviar "${file.name}"`, 'error');
+                }
+            };
+
+            xhr.onerror = () => {
+                status.textContent = 'Erro de conexão';
+                item.classList.add('error');
+
+                showToast(`Erro de conexão`, 'error');
+            };
+
+            xhr.send(formData);
+        });
+
+        // 🔥 Atualiza depois de tudo
+        setTimeout(() => {
+            atualizarLista();
+        }, 800);
+    }
+});
+
+function fecharPainel() {
+    document.getElementById('upload-panel').style.display = 'none';
+}
+
+async function atualizarLista() {
+    const container = document.getElementById('file-list-container');
+
+    const caminho = window.location.pathname.replace('/explorar', '');
+    const response = await fetch(`/partial/lista${caminho}`);
+
+    const html = await response.text();
+
+    container.innerHTML = html;
+
+    showToast('Atualizado!', 'info');
+}

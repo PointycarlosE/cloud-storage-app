@@ -99,6 +99,51 @@ def explorar(caminho=""):
     except Exception as e:
         return render_template("erro.html", mensagem=f"Erro inesperado: {str(e)}"), 500
 
+# -------- Lista Parcial de arquivos ------
+@file_bp.route('/partial/lista/<path:caminho>')
+@file_bp.route('/partial/lista/', defaults={'caminho': ''})
+@login_required_optional
+def lista_parcial(caminho=""):
+    pasta_atual = os.path.abspath(os.path.join(PASTA_BASE, caminho))
+
+    if os.path.commonpath([PASTA_BASE, pasta_atual]) != PASTA_BASE:
+        abort(403)
+
+    itens = os.listdir(pasta_atual)
+
+    pastas = []
+    arquivos = []
+    imagens = []
+    audios = []
+
+    exetensoes_imagens = ('.png','.jpg','.jpeg','.gif','.webp','.bmp')
+    extensoes_audio = ('.mp3', '.wav', '.ogg', '.m4a', '.flac')
+
+    for item in itens:
+        caminho_item = os.path.join(pasta_atual, item)
+        item_info = get_info_arquivo(caminho_item, item)
+
+        if os.path.isdir(caminho_item):
+            item_info['tamanho_formatado'] = '--'
+            pastas.append(item_info)
+        else:
+            nome_lower = item.lower()
+            if nome_lower.endswith(exetensoes_imagens):
+                imagens.append(item_info)
+            elif nome_lower.endswith(extensoes_audio):
+                audios.append(item_info)
+            else:
+                arquivos.append(item_info)
+
+    return render_template(
+        'partials/_lista_arquivos.html',
+        pastas=pastas,
+        arquivos=arquivos,
+        imagens=imagens,
+        audios=audios,
+        caminho=caminho
+    )
+
 # -------- DOWNLOAD INDIVIDUAL --------
 @file_bp.route('/download/<path:caminho_arquivo>')
 @login_required_optional

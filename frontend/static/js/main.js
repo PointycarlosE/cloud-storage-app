@@ -101,19 +101,58 @@ const ConfirmModal = {
 // Inicializar modal
 document.addEventListener('DOMContentLoaded', () => ConfirmModal.init());
 
-// Funções de confirmação
-window.confirmarExclusao = async (nomeArquivo) => {
-    return await ConfirmModal.open({
+// Função para confirmar exclusão de arquivo
+window.confirmarExclusao = async (nomeArquivo, form) => {
+    console.log('confirmarExclusao chamado para:', nomeArquivo); // Debug
+    
+    const result = await ConfirmModal.open({
         title: 'Excluir arquivo',
-        message: 'Tem certeza que deseja excluir este arquivo?',
-        detail: nomeArquivo
+        message: `Tem certeza que deseja excluir o arquivo "${nomeArquivo}"?`,
+        detail: 'Esta ação não pode ser desfeita.'
     });
+    
+    console.log('Resultado da confirmação:', result); // Debug
+    
+    if (result) {
+        // 🔥 SALVA INFO PARA MOSTRAR DEPOIS
+        sessionStorage.setItem('toastMessage', `✅ "${nomeArquivo}" excluído com sucesso!`);
+        sessionStorage.setItem('toastType', 'success');
+
+        form.submit();
+    }
+    
+    // Não retorna nada, pois já prevenimos o envio no HTML
 };
 
-window.confirmarExclusaoPasta = async (nomePasta) => {
-    return await ConfirmModal.open({
+// Função para confirmar exclusão de pasta
+window.confirmarExclusaoPasta = async (nomePasta, form) => {
+    console.log('confirmarExclusaoPasta chamado para:', nomePasta); // Debug
+    
+    const result = await ConfirmModal.open({
         title: '⚠️ Excluir pasta',
-        message: 'ATENÇÃO! Todos os arquivos dentro dela serão apagados permanentemente.',
-        detail: nomePasta
+        message: `Tem certeza que deseja excluir a pasta "${nomePasta}"?`,
+        detail: 'ATENÇÃO! TODOS os arquivos dentro dela serão apagados permanentemente.'
     });
+    
+    console.log('Resultado da confirmação:', result); // Debug
+    
+    if (result) {
+        sessionStorage.setItem('toastMessage', `📁 "${nomePasta}" excluída com sucesso!`);
+        sessionStorage.setItem('toastType', 'success');
+
+        form.submit();
+    }
 };
+
+document.addEventListener('DOMContentLoaded', () => {
+    const message = sessionStorage.getItem('toastMessage');
+    const type = sessionStorage.getItem('toastType');
+
+    if (message) {
+        showToast(message, type || 'success');
+
+        // limpar depois de usar
+        sessionStorage.removeItem('toastMessage');
+        sessionStorage.removeItem('toastType');
+    }
+});

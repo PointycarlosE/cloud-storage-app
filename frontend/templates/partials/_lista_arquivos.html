@@ -1,0 +1,154 @@
+        <!-- Listagem de itens -->
+        <section class="listagem-itens">
+            <!-- Pastas -->
+            {% if pastas %}
+            {% for pasta in pastas %}
+            <div class="item-link" data-nome="{{ pasta.nome }}" data-tipo="pasta"
+                data-caminho="{{ caminho_atual + '/' + pasta.nome if caminho_atual else pasta.nome }}">
+                <div class="item-card item-pasta">
+                    <div class="item-checkbox" onclick="event.stopPropagation()">
+                        <input type="checkbox" class="item-checkbox-input" data-nome="{{ pasta.nome }}"
+                            data-tipo="pasta"
+                            data-caminho="{{ caminho_atual + '/' + pasta.nome if caminho_atual else pasta.nome }}">
+                    </div>
+                    <div class="item-icone">📁</div>
+                    <div class="item-info">
+                        <div class="item-nome" title="{{ pasta.nome }}">{{ pasta.nome }}</div>
+                        <div class="item-meta">
+                            <span class="item-tipo">Pasta</span>
+                            <span class="item-tamanho">{{ pasta.tamanho_formatado }}</span>
+                            <span class="item-data">{{ pasta.data_modificacao }}</span>
+                        </div>
+                    </div>
+                    <!-- Pastas - botão de excluir individual -->
+                    <div class="item-acoes" onclick="event.stopPropagation()">
+                        <form
+                            action="{{ url_for('file.deletar_pasta', caminho_pasta=caminho_atual + '/' + pasta.nome if caminho_atual else pasta.nome) }}"
+                            method="post" class="form-excluir"
+                            onsubmit="event.preventDefault(); confirmarExclusaoPasta('{{ pasta.nome }}', this); return false;">
+                            <button type="submit" class="botao-excluir" title="Excluir pasta">🗑️</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <!-- Imagens -->
+            {% if imagens %}
+            {% for imagem in imagens %}
+            <div class="item-link" data-nome="{{ imagem.nome }}" data-tipo="imagem"
+                data-caminho="{{ caminho_atual + '/' + imagem.nome if caminho_atual else imagem.nome }}">
+                <div class="item-card item-imagem">
+                    <div class="item-checkbox" onclick="event.stopPropagation()">
+                        <input type="checkbox" class="item-checkbox-input" data-nome="{{ imagem.nome }}"
+                            data-tipo="imagem"
+                            data-caminho="{{ caminho_atual + '/' + imagem.nome if caminho_atual else imagem.nome }}">
+                    </div>
+                    <div class="item-icone">
+                        <img src="{{ url_for('file.visualizar_arquivo', caminho_arquivo=caminho_atual + '/' + imagem.nome if caminho_atual else imagem.nome) }}"
+                            alt="{{ imagem.nome }}" class="item-thumbnail">
+                    </div>
+                    <div class="item-info">
+                        <div class="item-nome" title="{{ imagem.nome }}">{{ imagem.nome }}</div>
+                        <div class="item-meta">
+                            <span class="item-tipo">Imagem</span>
+                            <span class="item-tamanho">{{ imagem.tamanho_formatado }}</span>
+                            <span class="item-data">{{ imagem.data_modificacao }}</span>
+                        </div>
+                    </div>
+                    <!-- Imagens - botão de excluir individual -->
+                    <div class="item-acoes" onclick="event.stopPropagation()">
+                        <a href="{{ url_for('file.download', caminho_arquivo=caminho_atual + '/' + imagem.nome if caminho_atual else imagem.nome) }}"
+                            class="botao-download" title="Download" onclick="event.stopPropagation()">⬇️</a>
+                        <form
+                            action="{{ url_for('file.deletar_arquivo', caminho_arquivo=caminho_atual + '/' + imagem.nome if caminho_atual else imagem.nome) }}"
+                            method="post" class="form-excluir"
+                            onsubmit="event.preventDefault(); confirmarExclusao('{{ imagem.nome }}', this); return false;">
+                            <button type="submit" class="botao-excluir" title="Excluir">🗑️</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <!-- Áudios -->
+            {% if audios %}
+            {% for audio in audios %}
+            <div class="item-link" data-nome="{{ audio.nome }}" data-tipo="audio"
+                data-caminho="{{ caminho_atual + '/' + audio.nome if caminho_atual else audio.nome }}">
+                <div class="item-card item-audio">
+                    <div class="item-checkbox" onclick="event.stopPropagation()">
+                        <input type="checkbox" class="item-checkbox-input" data-nome="{{ audio.nome }}"
+                            data-tipo="audio"
+                            data-caminho="{{ caminho_atual + '/' + audio.nome if caminho_atual else audio.nome }}">
+                    </div>
+                    <div class="item-icone">🎵</div>
+                    <div class="item-info">
+                        <div class="audio-wrapper">
+                            <div class="item-nome" title="{{ audio.nome }}">{{ audio.nome }}</div>
+                            <div class="item-meta">
+                                <span class="item-tipo">Áudio</span>
+                                <span class="item-tamanho">{{ audio.tamanho_formatado }}</span>
+                                <span class="item-data">{{ audio.data_modificacao }}</span>
+                            </div>
+                            <audio controls class="audio-player" onclick="event.stopPropagation()">
+                                <source
+                                    src="{{ url_for('file.visualizar_arquivo', caminho_arquivo=caminho_atual + '/' + audio.nome if caminho_atual else audio.nome) }}">
+                            </audio>
+                        </div>
+                    </div>
+                    <!-- Áudios - botão de excluir individual -->
+                    <div class="item-acoes" onclick="event.stopPropagation()">
+                        <a href="{{ url_for('file.download', caminho_arquivo=caminho_atual + '/' + audio.nome if caminho_atual else audio.nome) }}"
+                            class="botao-download" title="Download" onclick="event.stopPropagation()">⬇️</a>
+                        <form
+                            action="{{ url_for('file.deletar_arquivo', caminho_arquivo=caminho_atual + '/' + audio.nome if caminho_atual else audio.nome) }}"
+                            method="post" class="form-excluir"
+                            onsubmit="event.preventDefault(); confirmarExclusao('{{ audio.nome }}', this); return false;">
+                            <button type="submit" class="botao-excluir" title="Excluir">🗑️</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <!-- Arquivos comuns -->
+            {% if arquivos %}
+            {% for arquivo in arquivos %}
+            <div class="item-link" data-nome="{{ arquivo.nome }}" data-tipo="arquivo"
+                data-caminho="{{ caminho_atual + '/' + arquivo.nome if caminho_atual else arquivo.nome }}">
+                <div class="item-card item-arquivo">
+                    <div class="item-checkbox" onclick="event.stopPropagation()">
+                        <input type="checkbox" class="item-checkbox-input" data-nome="{{ arquivo.nome }}"
+                            data-tipo="arquivo"
+                            data-caminho="{{ caminho_atual + '/' + arquivo.nome if caminho_atual else arquivo.nome }}">
+                    </div>
+                    <div class="item-icone file-icon"
+                        data-extensao="{{ arquivo.nome.split('.')[-1].lower() if '.' in arquivo.nome else 'file' }}">
+                    </div>
+                    <div class="item-info">
+                        <div class="item-nome" title="{{ arquivo.nome }}">{{ arquivo.nome }}</div>
+                        <div class="item-meta">
+                            <span class="item-tipo">Arquivo</span>
+                            <span class="item-tamanho">{{ arquivo.tamanho_formatado }}</span>
+                            <span class="item-data">{{ arquivo.data_modificacao }}</span>
+                        </div>
+                    </div>
+                    <!-- Arquivos comuns - botão de excluir individual -->
+                    <div class="item-acoes" onclick="event.stopPropagation()">
+                        <a href="{{ url_for('file.download', caminho_arquivo=caminho_atual + '/' + arquivo.nome if caminho_atual else arquivo.nome) }}"
+                            class="botao-download" title="Download" onclick="event.stopPropagation()">⬇️</a>
+                        <form
+                            action="{{ url_for('file.deletar_arquivo', caminho_arquivo=caminho_atual + '/' + arquivo.nome if caminho_atual else arquivo.nome) }}"
+                            method="post" class="form-excluir"
+                            onsubmit="event.preventDefault(); confirmarExclusao('{{ arquivo.nome }}', this); return false;">
+                            <button type="submit" class="botao-excluir" title="Excluir">🗑️</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
