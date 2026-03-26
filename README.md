@@ -171,10 +171,10 @@ SECRET_KEY=sua_chave_secreta
 
 ---
 
-### Alterar porta
+### Alterar porta (config.py)
 
 ```python
-PORT = 8080
+PORT = 8080 # PADRÃO 5000
 ```
 
 ---
