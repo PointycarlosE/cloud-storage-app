@@ -13,13 +13,7 @@
 
 O **Cloud Storage App** é uma aplicação web desenvolvida com **Python (Flask)** que transforma seu computador em um servidor de arquivos acessível via navegador.
 
-O projeto evolui continuamente para oferecer uma experiência próxima a serviços como o Google Drive, incorporando recursos modernos como:
-
-* Drag & Drop global
-* Upload com progresso em tempo real
-* Atualização dinâmica da interface (sem recarregamento)
-
-Tudo isso mantendo o objetivo principal:
+O projeto evoluiu para oferecer uma experiência cada vez mais próxima de serviços como o Google Drive, com recursos modernos como **drag & drop, upload com progresso em tempo real, player de áudio integrado e atualização dinâmica da interface**, mantendo o principal objetivo:
 
 > 🔒 Garantir ao usuário **controle total sobre seus dados**, sem dependência de serviços terceiros.
 
@@ -73,22 +67,31 @@ Tudo isso mantendo o objetivo principal:
 
 ### 🎨 Interface
 
+* Novo layout moderno e mais elegante
+* Interface refinada com melhor organização visual
 * Tema claro/escuro persistente
 * Visualização em lista ou grade
 * Design responsivo (desktop, tablet e mobile)
 * Toast notifications modernas
 * Modais personalizados
-* Scrollbars customizadas
-* Painel de uploads animado
-
+* Scrollbars customizadas (tema claro/escuro)
+* Painel de uploads estilizado e animado
 ---
 
 ### 🖼️ Visualização de Arquivos
 
 * Lightbox para imagens
-* Player de áudio integrado
+* 🎵 Player de áudio integrado (reprodução direta no navegador)
 * Visualização de PDF
 * Miniaturas automáticas
+---
+
+### 🎵 Reprodução de Áudio
+
+* Player de áudio integrado na interface
+* Reprodução direta de arquivos (.mp3, .wav, etc.)
+* Controles nativos (play, pause, progresso)
+* Experiência fluida sem necessidade de download
 
 ---
 
@@ -270,6 +273,8 @@ Criar uma plataforma que seja:
 * [x] Drag & Drop global
 * [x] Painel de uploads
 * [x] Atualização dinâmica sem reload
+* [x] Player de áudio integrado
+* [x] Novo layout moderno
 
 ---
 
