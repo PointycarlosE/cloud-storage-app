@@ -157,7 +157,7 @@ Para acessar de outros dispositivos na mesma rede:
 ## 🛠️ Estrutura do Projeto
 
 ```
-meu-drive-pessoal/
+Todo projeto/
 ├── app.py                 # Aplicação principal
 ├── config.py              # Configurações centrais
 ├── .env                   # Variáveis de ambiente (criado na primeira execução)
