@@ -17,8 +17,8 @@ env/
 .env/
 
 # Instância (arquivos sensíveis)
-instance/
-*.firstrun
+instance/*
+!instance/.gitkeep
 
 # IDE
 .vscode/
