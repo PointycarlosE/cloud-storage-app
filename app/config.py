@@ -8,6 +8,7 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ENV_PATH = os.path.join(ROOT_DIR, 'instance', '.env')
 FIRST_RUN_FILE = os.path.join(ROOT_DIR, 'instance', '.firstrun')
 
+
 # CARREGAR .env
 if os.path.exists(ENV_PATH):
     load_dotenv(ENV_PATH, override=True)

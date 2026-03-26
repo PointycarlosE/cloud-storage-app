@@ -1,309 +1,274 @@
-Aqui está o README.md completo e organizado para você copiar e colar:
-
-# 📁 Meu Drive Pessoal - Explorador de Arquivos Web
+# ☁️ Cloud Storage App (Self-Hosted Drive)
 
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
 [![Flask](https://img.shields.io/badge/Flask-2.0+-red.svg)](https://flask.palletsprojects.com/)
-[![Status](https://img.shields.io/badge/Status-Production%20Ready-green.svg)]()
+[![Status](https://img.shields.io/badge/Status-Active-green.svg)]()
 
-Um explorador de arquivos pessoal desenvolvido com Python/Flask, que permite navegar, visualizar e gerenciar arquivos diretamente no navegador. Uma alternativa self-hosted ao Google Drive para sua rede local.
+> 🚀 Um sistema de armazenamento em nuvem local, inspirado no Google Drive, que permite gerenciar arquivos diretamente pelo navegador com foco em segurança, simplicidade e controle total dos dados.
+
+---
+
+## 📌 Sobre o Projeto
+
+O **Cloud Storage App** é uma aplicação web self-hosted desenvolvida com **Python (Flask)** que transforma seu computador em um servidor de arquivos acessível via navegador.
+
+O projeto surgiu com o objetivo de oferecer uma alternativa pessoal aos serviços de armazenamento em nuvem tradicionais, permitindo que o usuário tenha **controle total sobre seus arquivos**, sem depender de terceiros.
 
 ---
 
 ## ✨ Funcionalidades
 
-### 🔐 Autenticação e Segurança
-- **Sistema de login completo** com proteção contra força bruta (5 tentativas / 15 minutos)
-- **Primeira execução intuitiva** - tela de criação de conta na primeira vez que o sistema roda
-- **Senhas armazenadas com hash** (algoritmo scrypt/pbkdf2) - nunca armazenadas em texto plano
-- **Sessões seguras** com cookies HttpOnly e SameSite
-- **Variáveis de ambiente** para configurações sensíveis (.env fora do repositório)
-- **Proteção de rotas** - redirecionamento automático para login
+### 🔐 Segurança & Autenticação
 
-### 📂 Navegação
-- Explorar pastas e arquivos do sistema
-- Caminho de navegação interativo (breadcrumb)
-- Botão para voltar à pasta anterior
-- **Memória de posição** - ao voltar de uma pasta, mantém a rolagem onde você estava
-- Suporte para arquivos de qualquer tamanho
-
-### 🎨 Interface
-- **Tema claro/escuro** com botão de alternância (sem flash branco)
-- **Visualização em grade ou lista** - escolha sua preferência (persistente no localStorage)
-- **Design totalmente responsivo** - funciona perfeitamente em desktop, tablet e celular
-- **Ícones dinâmicos** por tipo de arquivo (PDF, Word, Excel, imagens, áudios, vídeos, código, etc.)
-- **Toast notifications** elegantes para feedback de ações
-- **Modal de confirmação personalizado** - substitui o alert() padrão
-
-### 🔍 Busca e Organização
-- **Pesquisa em tempo real** - filtra enquanto digita
-- **Ordenação** por nome, tipo, tamanho ou data (com setas indicando direção)
-- **Informações detalhadas**:
-  - Tamanho formatado (B, KB, MB, GB)
-  - Data de modificação inteligente ("Hoje às HH:MM", "Ontem às HH:MM", ou data completa)
-  - Tipo do arquivo
-
-### ✅ Seleção e Ações
-- **Seleção múltipla** com checkboxes
-- **Barra de ações** que aparece quando itens são selecionados
-- **Atalhos de teclado**:
-  - `Ctrl + A` - Selecionar todos os itens
-  - `Delete` - Excluir itens selecionados
-- **Download individual** de arquivos
-- **Download em ZIP** - selecione múltiplos arquivos/pastas e baixe tudo em um arquivo compactado
-- **Upload de múltiplos arquivos** - selecione vários arquivos de uma vez
-- **Criar novas pastas**
-- **Excluir** arquivos e pastas (individual ou múltiplo) 
-    -  obs: individual ainda em produção
-
-### 🖼️ Visualizadores
-- **Lightbox para imagens** - navegação entre imagens com setas do teclado
-- **Player de áudio** integrado nos cards
-- **Visualização de PDF** em nova aba
-- **Miniaturas** para imagens
-
-### 🛡️ Segurança
-- Restrito à pasta base configurada (não permite acesso fora dela)
-- Validação de caminhos contra `../` (path traversal)
-- Nomes de arquivos sanitizados com `secure_filename`
-- Bloqueio de acesso a pastas sem permissão
+* Sistema de login com proteção contra força bruta
+* Senhas armazenadas com hash seguro (scrypt/pbkdf2)
+* Sessões protegidas (HttpOnly + SameSite)
+* Proteção de rotas e controle de acesso
+* Validação contra ataques de path traversal
 
 ---
 
-## 🚀 Como instalar e executar
+### 📂 Gerenciamento de Arquivos
 
-### Pré-requisitos
-- Python 3.8 ou superior
-- Pip (gerenciador de pacotes Python)
-- Git (opcional, para clonar o repositório)
+* Navegação completa por diretórios
+* Upload de múltiplos arquivos
+* Download individual e em ZIP
+* Criação de pastas
+* Exclusão de arquivos e diretórios
+* Seleção múltipla com atalhos (`Ctrl + A`, `Delete`)
 
-### Instalação Rápida
+---
 
-# 1. Clone o repositório
+### 🔍 Organização & Busca
+
+* Pesquisa em tempo real
+* Ordenação por nome, tipo, tamanho e data
+* Exibição de metadados formatados
+* Breadcrumb interativo
+
+---
+
+### 🎨 Interface
+
+* Tema claro/escuro persistente
+* Visualização em lista ou grade
+* Design responsivo (desktop, tablet e mobile)
+* Toast notifications e modais personalizados
+
+---
+
+### 🖼️ Visualização de Arquivos
+
+* Lightbox para imagens
+* Player de áudio integrado
+* Visualização de PDF
+* Miniaturas automáticas
+
+---
+
+## 🚀 Como Executar
+
+### 1. Clone o repositório
+
 ```bash
-git clone https://github.com/seu-usuario/meu-drive-pessoal.git
-cd meu-drive-pessoal
+git clone https://github.com/seu-usuario/cloud-storage-app.git
+cd cloud-storage-app
 ```
-# 2. Crie um ambiente virtual (recomendado)
+
+---
+
+### 2. Crie e ative o ambiente virtual
+
 ```bash
 python -m venv venv
 ```
-# 3. Ative o ambiente virtual
 
-## Windows:
+**Windows**
+
 ```bash
 venv\Scripts\activate
 ```
-## Linux/Mac:
+
+**Linux/Mac**
+
 ```bash
 source venv/bin/activate
 ```
 
-# 4. Instale as dependências
-```bash
-pip install Flask
-pip install Wekzeug
-pip install Flask-Login
-pip install dotenv
-
-```
 ---
-### Primeira Execução
 
-1. **Inicie o servidor:**
+### 3. Instale as dependências
+
 ```bash
-python app.py
+pip install -r requirements.txt
 ```
 
-2. **Acesse no navegador:**
+---
+
+### 4. Execute o projeto
+
+```bash
+python run.py
+```
+
+Acesse:
+
 ```
 http://localhost:5000
 ```
 
-3. **Configure sua conta:**
-   - Na primeira execução, você será redirecionado para a tela de criação de conta
-   - Digite seu nome de usuário e senha (mínimo 6 caracteres)
-   - Defina a pasta que será usada como repositório de arquivos
-   - Exemplo: `C:\Users\SeuUsuario\MeuDriveRepositorio` (Windows) ou `/home/usuario/MeuDriveRepositorio` (Linux)
+---
 
-4. **Reinicie o servidor** (Ctrl+C e `python app.py` novamente)
-    - Necessário para a criação dos arquivos de configuração
-    - Pretendo arrumar isso para não ser necessário reiniciar
+## ⚙️ Primeira Execução
 
-5. **Faça login** com as credenciais criadas
+* Crie sua conta ao acessar o sistema pela primeira vez
+* Defina a pasta base onde os arquivos serão armazenados
+* Reinicie o servidor (temporariamente necessário)
 
-### Acesso na Rede Local
+---
 
-Para acessar de outros dispositivos na mesma rede:
+## 🌐 Acesso na Rede Local
 
 1. Descubra o IP do seu computador:
-   ```bash
-   # Windows:
-   ipconfig
-   # Linux/Mac:
-   ifconfig
-   ```
+
+```bash
+ipconfig      # Windows
+ifconfig      # Linux/Mac
+```
 
 2. Acesse de outro dispositivo:
-   ```
-   http://[IP_DO_SEU_COMPUTADOR]:5000
-   ```
 
-> ⚠️ **Importante**: Certifique-se de que o firewall não esteja bloqueando a porta 5000.
+```
+http://SEU_IP:5000
+```
+
+> ⚠️ Verifique se o firewall permite conexões na porta utilizada.
 
 ---
 
 ## 🛠️ Estrutura do Projeto
 
 ```
-Todo projeto/
-├── app.py                 # Aplicação principal
-├── config.py              # Configurações centrais
-├── .env                   # Variáveis de ambiente (criado na primeira execução)
-├── requirements.txt       # Dependências
-├── auth/                  # Módulo de autenticação
-│   ├── __init__.py
-│   ├── models.py          # Modelo de usuário
-│   ├── routes.py          # Rotas de login/logout/setup
-│   └── decorators.py      # Decoradores de proteção de rotas
-├── routes/                # Rotas da aplicação
-│   ├── __init__.py
-│   ├── main_routes.py     # Rotas principais (home, objetivos)
-│   └── file_routes.py     # Rotas de arquivos (explorar, upload, download)
-├── utils/                 # Utilitários
-│   ├── __init__.py
-│   └── helpers.py         # Funções auxiliares (formatação, etc.)
-├── templates/             # Templates HTML
-│   ├── home.html
-│   ├── objetivos.html
-│   ├── explorar.html
-│   ├── login.html
-│   ├── setup.html
-│   └── erro.html
-└── static/                # Arquivos estáticos
-    ├── css/
-    │   └── style.css
-    ├── js/
-    │   ├── main.js        # Scripts globais (tema, toast, modal)
-    │   └── explorar.js    # Scripts do explorador
-    └── img/
-        └── favicon.ico
+cloud-storage-app/
+├── app/            # Backend (Flask)
+├── frontend/       # Interface (HTML, CSS, JS)
+├── instance/       # Configurações locais (.env)
+├── run.py          # Inicialização da aplicação
+├── requirements.txt
 ```
 
 ---
 
-## 🔧 Configuração Avançada
+## 🔧 Configuração
 
-### Alterar a Pasta Base
+### Variáveis de ambiente (.env)
 
-Edite o arquivo `.env` gerado na primeira execução:
-
-```bash
-PASTA_BASE=C:\Users\SeuUsuario\NovaPasta
+```env
+PASTA_BASE=/caminho/para/seus/arquivos
+SECRET_KEY=sua_chave_secreta
 ```
 
-### Alterar a Porta
+---
 
-No `config.py`:
+### Alterar porta
 
 ```python
-PORT = 8080  # ou qualquer outra porta
-```
-
-### Desabilitar o Login (para desenvolvimento)
-
-No `config.py`:
-
-```python
-REQUIRE_LOGIN = False
-```
-
-### Gerar Nova Chave Secreta
-
-```bash
-python -c "import secrets; print(secrets.token_hex(32))"
-```
-Copie o resultado e substitua `SECRET_KEY` no arquivo `.env`.
-
----
-
-## 📦 Dependências
-
-```txt
-Flask==2.3.3
-Werkzeug==2.3.7
-Flask-Login==0.6.2
-python-dotenv==1.0.0
+PORT = 8080
 ```
 
 ---
 
-## 🚧 Em Desenvolvimento
+## 📦 Tecnologias Utilizadas
 
-### Instalador Automático (em breve)
-
-Estou desenvolvendo instaladores automáticos para Windows e Linux que vão:
-
-- Baixar o projeto do GitHub
-- Configurar o ambiente virtual automaticamente
-- Criar o arquivo `.env` com suas credenciais
-- Criar atalhos na área de trabalho
-- Iniciar o servidor automaticamente
-
-> ⚠️ **Status**: Em desenvolvimento. Por enquanto, siga as instruções manuais acima.
+* **Backend:** Python + Flask
+* **Frontend:** HTML, CSS, JavaScript
+* **Segurança:** Flask-Login, Werkzeug
+* **Configuração:** python-dotenv
 
 ---
 
-## 🎯 Próximas Funcionalidades
+## 🌍 Visão de Futuro
 
-- [ ] **Instalador automático** (Windows/Linux)
-- [ ] **Barra de progresso para uploads**
-- [ ] **Arrastar e soltar** para upload
-- [ ] **Favoritos / Pastas rápidas**
-- [ ] **Histórico de navegação** (botões voltar/avançar)
-- [ ] **Visualização de vídeos**
-- [ ] **Modo offline com Service Worker**
-- [ ] **Compartilhamento de arquivos com links temporários**
-- [ ] **Múltiplos usuários** com permissões
-- [ ] **Log de atividades**
+O objetivo deste projeto é evoluir de um sistema local para uma solução completa acessível pela internet, mantendo como pilares a **segurança, simplicidade e autonomia do usuário**.
+
+A ideia é permitir que qualquer pessoa possa hospedar seu próprio sistema de armazenamento e acessá-lo de qualquer lugar, sem depender de serviços terceiros.
 
 ---
 
-## 🤝 Contribuindo
+### 🔐 Segurança como Prioridade
 
-Contribuições são bem-vindas! Sinta-se à vontade para:
+A disponibilização em ambiente externo exige um nível elevado de proteção. Por isso, o projeto está sendo desenvolvido com foco contínuo em segurança.
 
-1. Fazer um fork do projeto
-2. Criar uma branch para sua feature (`git checkout -b feature/nova-funcionalidade`)
-3. Commit suas mudanças (`git commit -m 'Adiciona nova funcionalidade'`)
-4. Push para a branch (`git push origin feature/nova-funcionalidade`)
-5. Abrir um Pull Request
+Entre os pontos em evolução:
+
+* Implementação de HTTPS (SSL/TLS)
+* Proteção contra CSRF e XSS
+* Fortalecimento do sistema de autenticação
+* Melhor gerenciamento de sessões
+* Validação rigorosa de uploads
+* Logs e auditoria de atividades
+* Controle de permissões (multiusuário)
+
+> * ⚠️ A versão que se encontra disponível para download e uso está configurada para funcionar apenas em rede local.
+> * Estou estudando sobre como levar ele para um ambiente externo de forma simples, segura e que qualquer pessoa possa configurar e fazer ela mesma.
+
+---
+
+### 🚧 Desafios Atuais
+
+* Preparação para deploy em ambiente externo (VPS / cloud)
+* Configuração de rede (DNS, domínio, acesso remoto)
+* Automatização da instalação para usuários finais
+* Otimização para múltiplos acessos simultâneos
+
+---
+
+### 🎯 Objetivo Final
+
+Criar uma plataforma de armazenamento em nuvem que seja:
+
+* 🔒 Segura por padrão
+* ⚙️ Simples de instalar e usar
+* 🌐 Acessível de qualquer lugar
+* 🧠 Independente de serviços terceiros
+
+---
+
+## 🚧 Roadmap
+
+* [ ] Upload com barra de progresso
+* [ ] Drag & Drop
+* [ ] Compartilhamento por link
+* [ ] Sistema multiusuário
+* [ ] Logs de atividade
+* [ ] Deploy online seguro
+
+---
+
+## 🤝 Contribuição
+
+1. Fork o projeto
+2. Crie uma branch (`feature/minha-feature`)
+3. Commit (`git commit -m 'feat: nova feature'`)
+4. Push (`git push origin feature/minha-feature`)
+5. Abra um Pull Request
 
 ---
 
 ## 📝 Licença
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+Este projeto está sob a licença MIT.
 
 ---
 
 ## 👨‍💻 Autor
 
-**Seu Nome**
-- GitHub: [@PointycarlosE](https://github.com/PointycarlosE)
-
-
----
-
-## 🙏 Agradecimentos
-
-- Inspirado no Google Drive e Windows Explorer
-- Comunidade Flask pela excelente documentação
-- Todos os contribuidores que ajudaram no projeto
+**Carlos**
+GitHub: https://github.com/PointycarlosE
 
 ---
 
-**Desenvolvido com ❤️ para uso pessoal e aprendizado**
----
-⭐ Se este projeto te ajudou, considere dar uma estrela no GitHub!
+## ⭐ Apoio
+
+Se este projeto te ajudou ou te inspirou, considere deixar uma estrela ⭐ no repositório!

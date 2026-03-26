@@ -24,16 +24,24 @@
     <header class="cabecalho">
         <nav class="menu-principal">
             <ul class="menu-lista">
-                <li><a href="{{ url_for('main.home') }}" class="menu-link">🏠 Home</a></li>
                 <li><a href="{{ url_for('main.objetivos') }}" class="menu-link">📋 Objetivos</a></li>
                 <li><a href="{{ url_for('file.explorar') }}" class="menu-link">📁 Explorador</a></li>
             </ul>
         </nav>
 
-        <!-- Botão de tema -->
-        <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema">
-            <span class="theme-icon">☀️</span>
-        </button>
+        <div style="display: flex; align-items: center; gap: 0.8rem;">
+            <!-- Botão de tema -->
+            <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema">
+                <span class="theme-icon">☀️</span>
+            </button>
+
+            <!-- Botão de logout -->
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('auth.logout') }}" class="logout-btn" title="Sair">
+                <span class="logout-icon">🚪</span>
+            </a>
+            {% endif %}
+        </div>
     </header>
 
     <main class="conteudo-principal">

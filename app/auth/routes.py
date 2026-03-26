@@ -6,16 +6,14 @@ from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash
 from datetime import datetime, timedelta
 
-from app.auth.models import User  # MUDAR: from auth.models import User
-from app.config import ADMIN_USERNAME, IS_FIRST_RUN, CONFIGURADO, ROOT_DIR, PASTA_BASE  # MUDAR
+from app.auth.models import User
+from app.config import ADMIN_USERNAME, IS_FIRST_RUN, CONFIGURADO, ROOT_DIR, PASTA_BASE
 
 auth_bp = Blueprint('auth', __name__)
 
-# Dicionário para controlar tentativas de login (em produção, use Redis ou banco)
+# Dicionário para controlar tentativas de login
 login_attempts = {}
 
-@auth_bp.route('/login', methods=['GET', 'POST'])
-# auth/routes.py
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     """Página de login com proteção contra força bruta"""
@@ -33,27 +31,21 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '')
-        remember = request.form.get('remember', False) == 'on'  # NOVO
+        remember = request.form.get('remember', False) == 'on'
         
         user = User.get(username)
         
         if user and user.check_password(password):
-            # Login bem-sucedido
             login_attempts.pop(client_ip, None)
-            
-            # Login com opção "lembrar de mim"
             login_user(user, remember=remember, duration=timedelta(days=30 if remember else 1))
-            
             next_page = request.args.get('next', url_for('file.explorar'))
             return redirect(next_page)
         else:
-            # Registrar tentativa falha
             if client_ip not in login_attempts:
                 login_attempts[client_ip] = [1, datetime.now()]
             else:
                 login_attempts[client_ip][0] += 1
                 login_attempts[client_ip][1] = datetime.now()
-            
             flash('Usuário ou senha inválidos', 'error')
     
     return render_template('login.html')
@@ -67,9 +59,10 @@ def logout():
 
 @auth_bp.route('/setup', methods=['GET', 'POST'])
 def setup():
-    from config import IS_FIRST_RUN, CONFIGURADO, ROOT_DIR
+    from app.config import IS_FIRST_RUN, CONFIGURADO, ROOT_DIR
     
-    if CONFIGURADO:
+    # Se já está configurado, redirecionar para login
+    if CONFIGURADO and not IS_FIRST_RUN:
         flash('Sistema já configurado. Faça login.', 'info')
         return redirect(url_for('auth.login'))
     
@@ -101,20 +94,14 @@ def setup():
             return render_template('setup.html')
         
         try:
-            # Gerar hash da senha
             password_hash = generate_password_hash(password)
-            
-            # NÃO CONVERTER NADA - usar o caminho exatamente como o usuário digitou
             repo_path_salvo = repo_path
             
             print(f"📁 Caminho digitado: {repo_path}")
             print(f"📁 Caminho salvo no .env: {repo_path_salvo}")
             
-            # Criar .env na raiz do projeto
             env_path = os.path.join(ROOT_DIR, 'instance', '.env')
             firstrun_path = os.path.join(ROOT_DIR, 'instance', '.firstrun')
-            
-            # Gerar SECRET_KEY
             secret_key = secrets.token_hex(32)
             
             env_content = f"""# Configuração do Meu Drive Pessoal
@@ -134,11 +121,9 @@ PASTA_BASE={repo_path_salvo}
             with open(env_path, 'w', encoding='utf-8') as f:
                 f.write(env_content)
             
-            # Criar .firstrun
             with open(firstrun_path, 'w', encoding='utf-8') as f:
                 f.write("configured")
             
-            # Criar pasta do repositório se não existir
             if not os.path.exists(repo_path_salvo):
                 os.makedirs(repo_path_salvo)
                 print(f"✅ Pasta do repositório criada: {repo_path_salvo}")
