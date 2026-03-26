@@ -1409,7 +1409,7 @@ body {
 #audioPlayer::-webkit-media-controls-play-button {
     transform: scale(1.1);
     margin: 0 8px;
-    background-color: #1a73e8 !important;
+    background-color: none !important;
     border-radius: 50%;
 }
 

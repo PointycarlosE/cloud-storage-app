@@ -994,120 +994,167 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // ===== AUDIO PLAYER MODAL =====
-document.addEventListener('DOMContentLoaded', function () {
-    const audioModal = document.getElementById('audioModal');
-    const audioPlayer = document.getElementById('audioPlayer');
-    const audioSource = document.getElementById('audioSource');
-    const audioModalTitle = document.getElementById('audioModalTitle');
-    const audioModalInfo = document.getElementById('audioModalInfo');
-    const audioModalDownload = document.getElementById('audioModalDownload');
-    const audioModalDelete = document.getElementById('audioModalDelete');
-    const audioModalClose = document.getElementById('audioModalClose');
-    const audioDuration = document.getElementById('audioDuration');
+(function() {
+    // Aguardar o DOM carregar
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAudioModal);
+    } else {
+        initAudioModal();
+    }
 
-    let currentAudioUrl = '';
-    let currentAudioName = '';
-    let currentAudioDeleteForm = null;
+    function initAudioModal() {
+        const audioModal = document.getElementById('audioModal');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const audioSource = document.getElementById('audioSource');
+        const audioModalTitle = document.getElementById('audioModalTitle');
+        const audioModalInfo = document.getElementById('audioModalInfo');
+        const audioModalDownload = document.getElementById('audioModalDownload');
+        const audioModalDelete = document.getElementById('audioModalDelete');
+        const audioModalClose = document.getElementById('audioModalClose');
+        const audioDuration = document.getElementById('audioDuration');
 
-    // Função para abrir o modal de áudio
-    window.openAudioModal = function (audioUrl, audioName, downloadUrl, deleteForm) {
-        console.log('Abrindo modal de áudio:', audioName); // Debug
         if (!audioModal) {
-            console.error('Modal de áudio não encontrado!');
+            console.error('Audio modal não encontrado!');
             return;
         }
 
-        currentAudioUrl = audioUrl;
-        currentAudioName = audioName;
-        currentAudioDeleteForm = deleteForm;
+        let currentAudioDeleteForm = null;
+        let shouldReload = false;
 
-        // Configurar o player
-        audioSource.src = audioUrl;
-        audioPlayer.load();
-
-        // Configurar título e info
-        audioModalTitle.textContent = audioName;
-        audioModalInfo.textContent = 'Áudio';
-
-        // Configurar botão de download
-        audioModalDownload.href = downloadUrl;
-
-        // Remover evento antigo do botão de excluir e adicionar novo
-        const newDeleteBtn = audioModalDelete.cloneNode(true);
-        audioModalDelete.parentNode.replaceChild(newDeleteBtn, audioModalDelete);
-
-        newDeleteBtn.addEventListener('click', async function (e) {
-            e.preventDefault();
-
-            const confirmado = await ConfirmModal.open({
-                title: 'Excluir áudio',
-                message: `Tem certeza que deseja excluir o áudio "${audioName}"?`,
-                detail: 'Esta ação não pode ser desfeita.'
-            });
-
-            if (confirmado && currentAudioDeleteForm) {
-                showToast(`Excluindo ${audioName}...`, 'info', 2000);
-
-                const form = currentAudioDeleteForm.cloneNode(true);
-                document.body.appendChild(form);
-                form.submit();
-
-                setTimeout(() => {
-                    if (document.body.contains(form)) {
-                        document.body.removeChild(form);
-                    }
-                }, 1000);
+        // Função para fechar o modal e recarregar a página
+        function closeAudioModalAndReload() {
+            console.log('Fechando modal de áudio e recarregando página...');
+            
+            // Parar o áudio
+            if (audioPlayer) {
+                audioPlayer.pause();
+                audioPlayer.currentTime = 0;
             }
-        });
+            
+            // Fechar o modal
+            audioModal.style.display = 'none';
+            document.body.style.overflow = '';
+            
+            // Recarregar a página após um pequeno delay
+            setTimeout(() => {
+                window.location.reload();
+            }, 100);
+        }
 
-        // Mostrar duração quando o áudio estiver carregado
-        const updateDuration = function () {
-            const duration = audioPlayer.duration;
-            if (!isNaN(duration) && duration > 0) {
-                const minutes = Math.floor(duration / 60);
-                const seconds = Math.floor(duration % 60);
-                audioDuration.textContent = `Duração: ${minutes}:${seconds.toString().padStart(2, '0')}`;
-                audioPlayer.removeEventListener('loadedmetadata', updateDuration);
+        // Função para fechar o modal sem recarregar (usado apenas para exclusão)
+        function closeAudioModalOnly() {
+            console.log('Fechando modal de áudio sem recarregar');
+            audioModal.style.display = 'none';
+            document.body.style.overflow = '';
+            if (audioPlayer) {
+                audioPlayer.pause();
+                audioPlayer.currentTime = 0;
+            }
+        }
+
+        // Função para abrir o modal
+        window.openAudioModal = function(audioUrl, audioName, downloadUrl, deleteForm) {
+            console.log('Abrindo modal de áudio:', audioName);
+            
+            currentAudioDeleteForm = deleteForm;
+
+            // Resetar completamente o player
+            if (audioPlayer) {
+                audioPlayer.pause();
+                audioPlayer.currentTime = 0;
+            }
+            
+            // Configurar nova fonte
+            if (audioSource) audioSource.src = audioUrl;
+            if (audioPlayer) audioPlayer.load();
+            
+            // Resetar duração
+            if (audioDuration) audioDuration.textContent = '';
+
+            // Configurar título e info
+            if (audioModalTitle) audioModalTitle.textContent = audioName;
+            if (audioModalInfo) audioModalInfo.textContent = 'Áudio';
+
+            // Configurar botão de download
+            if (audioModalDownload) audioModalDownload.href = downloadUrl;
+
+            // Configurar botão de excluir
+            const handleDelete = async function(e) {
+                e.preventDefault();
+                const confirmado = await ConfirmModal.open({
+                    title: 'Excluir áudio',
+                    message: `Tem certeza que deseja excluir o áudio "${audioName}"?`,
+                    detail: 'Esta ação não pode ser desfeita.'
+                });
+
+                if (confirmado && currentAudioDeleteForm) {
+                    showToast(`Excluindo ${audioName}...`, 'info', 2000);
+                    
+                    // Fechar o modal primeiro (sem recarregar)
+                    closeAudioModalOnly();
+                    
+                    const form = currentAudioDeleteForm.cloneNode(true);
+                    document.body.appendChild(form);
+                    form.submit();
+                    
+                    // A exclusão vai recarregar a página automaticamente
+                }
+            };
+
+            // Remover eventos antigos e adicionar novo
+            if (audioModalDelete) {
+                const newDeleteBtn = audioModalDelete.cloneNode(true);
+                audioModalDelete.parentNode.replaceChild(newDeleteBtn, audioModalDelete);
+                newDeleteBtn.addEventListener('click', handleDelete);
+            }
+
+            // Atualizar duração quando carregar
+            if (audioPlayer) {
+                const updateDuration = function() {
+                    const duration = audioPlayer.duration;
+                    if (!isNaN(duration) && duration > 0) {
+                        const minutes = Math.floor(duration / 60);
+                        const seconds = Math.floor(duration % 60);
+                        if (audioDuration) {
+                            audioDuration.textContent = `Duração: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                        }
+                        audioPlayer.removeEventListener('loadedmetadata', updateDuration);
+                    }
+                };
+                audioPlayer.addEventListener('loadedmetadata', updateDuration);
+            }
+
+            // Abrir modal
+            audioModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+
+            // Tentar reproduzir
+            if (audioPlayer) {
+                audioPlayer.play().catch(e => console.log('Autoplay bloqueado:', e));
             }
         };
-        audioPlayer.addEventListener('loadedmetadata', updateDuration);
 
-        // Abrir modal
-        audioModal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-
-        // Tentar reproduzir automaticamente (pode ser bloqueado pelo navegador)
-        audioPlayer.play().catch(e => console.log('Autoplay bloqueado:', e));
-    };
-
-    // Função para fechar o modal de áudio
-    function closeAudioModal() {
-        if (audioModal) {
-            audioModal.style.display = 'none';
-            audioPlayer.pause();
-            audioPlayer.currentTime = 0;
-            audioSource.src = '';
-            document.body.style.overflow = '';
+        // Eventos de fechamento - TODOS recarregam a página
+        if (audioModalClose) {
+            audioModalClose.onclick = closeAudioModalAndReload;
         }
-    }
+        
+        if (audioModal) {
+            audioModal.onclick = function(e) {
+                if (e.target === audioModal) {
+                    closeAudioModalAndReload();
+                }
+            };
+        }
 
-    // Eventos de fechamento
-    if (audioModalClose) audioModalClose.addEventListener('click', closeAudioModal);
-    if (audioModal) {
-        audioModal.addEventListener('click', function (e) {
-            if (e.target === audioModal) {
-                closeAudioModal();
+        // Fechar com ESC também recarrega
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && audioModal.style.display === 'flex') {
+                closeAudioModalAndReload();
             }
         });
     }
-
-    // Fechar com ESC
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && audioModal && audioModal.style.display === 'flex') {
-            closeAudioModal();
-        }
-    });
-});
+})();
 
 // ===== FUNÇÃO PARA FECHAR O PAINEL DE UPLOAD =====
 function fecharPainel() {
