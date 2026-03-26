@@ -5,15 +5,23 @@
 [![Flask](https://img.shields.io/badge/Flask-2.0+-red.svg)](https://flask.palletsprojects.com/)
 [![Status](https://img.shields.io/badge/Status-Active-green.svg)]()
 
-> 🚀 Um sistema de armazenamento em nuvem local, inspirado no Google Drive, que permite gerenciar arquivos diretamente pelo navegador com foco em segurança, simplicidade e controle total dos dados.
+> 🚀 Um sistema de armazenamento em nuvem self-hosted, inspirado no Google Drive, com interface moderna, uploads avançados e foco em **segurança, simplicidade e controle total dos dados**.
 
 ---
 
 ## 📌 Sobre o Projeto
 
-O **Cloud Storage App** é uma aplicação web self-hosted desenvolvida com **Python (Flask)** que transforma seu computador em um servidor de arquivos acessível via navegador.
+O **Cloud Storage App** é uma aplicação web desenvolvida com **Python (Flask)** que transforma seu computador em um servidor de arquivos acessível via navegador.
 
-O projeto surgiu com o objetivo de oferecer uma alternativa pessoal aos serviços de armazenamento em nuvem tradicionais, permitindo que o usuário tenha **controle total sobre seus arquivos**, sem depender de terceiros.
+O projeto evolui continuamente para oferecer uma experiência próxima a serviços como o Google Drive, incorporando recursos modernos como:
+
+* Drag & Drop global
+* Upload com progresso em tempo real
+* Atualização dinâmica da interface (sem recarregamento)
+
+Tudo isso mantendo o objetivo principal:
+
+> 🔒 Garantir ao usuário **controle total sobre seus dados**, sem dependência de serviços terceiros.
 
 ---
 
@@ -33,10 +41,24 @@ O projeto surgiu com o objetivo de oferecer uma alternativa pessoal aos serviço
 
 * Navegação completa por diretórios
 * Upload de múltiplos arquivos
+* Upload via **drag & drop em toda a interface**
+* Painel de uploads com progresso individual (estilo Google Drive)
 * Download individual e em ZIP
-* Criação de pastas
-* Exclusão de arquivos e diretórios
+* Criação e exclusão de pastas
 * Seleção múltipla com atalhos (`Ctrl + A`, `Delete`)
+
+---
+
+### ⚡ Experiência Dinâmica (UX)
+
+* Atualização de arquivos **sem reload (AJAX)**
+* Interface fluida (mantém contexto e scroll)
+* Feedback em tempo real durante uploads
+* Estados de upload:
+
+  * Enviando
+  * Concluído
+  * Erro
 
 ---
 
@@ -54,7 +76,10 @@ O projeto surgiu com o objetivo de oferecer uma alternativa pessoal aos serviço
 * Tema claro/escuro persistente
 * Visualização em lista ou grade
 * Design responsivo (desktop, tablet e mobile)
-* Toast notifications e modais personalizados
+* Toast notifications modernas
+* Modais personalizados
+* Scrollbars customizadas
+* Painel de uploads animado
 
 ---
 
@@ -72,7 +97,7 @@ O projeto surgiu com o objetivo de oferecer uma alternativa pessoal aos serviço
 ### 1. Clone o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/cloud-storage-app.git
+git clone https://github.com/PointycarlosE/cloud-storage-app.git
 cd cloud-storage-app
 ```
 
@@ -122,28 +147,28 @@ http://localhost:5000
 
 ## ⚙️ Primeira Execução
 
-* Crie sua conta ao acessar o sistema pela primeira vez
-* Defina a pasta base onde os arquivos serão armazenados
+* Crie sua conta ao acessar o sistema
+* Defina a pasta base dos arquivos
 * Reinicie o servidor (temporariamente necessário)
 
 ---
 
 ## 🌐 Acesso na Rede Local
 
-1. Descubra o IP do seu computador:
+1. Descubra seu IP:
 
 ```bash
-ipconfig      # Windows
-ifconfig      # Linux/Mac
+ipconfig      # Windows  
+ifconfig      # Linux/Mac  
 ```
 
-2. Acesse de outro dispositivo:
+2. Acesse:
 
 ```
 http://SEU_IP:5000
 ```
 
-> ⚠️ Verifique se o firewall permite conexões na porta utilizada.
+> ⚠️ Verifique se o firewall permite conexões na porta.
 
 ---
 
@@ -165,16 +190,16 @@ cloud-storage-app/
 ### Variáveis de ambiente (.env)
 
 ```env
-PASTA_BASE=/caminho/para/seus/arquivos
+PASTA_BASE=/caminho/para/arquivos
 SECRET_KEY=sua_chave_secreta
 ```
 
 ---
 
-### Alterar porta (config.py)
+### Alterar porta
 
 ```python
-PORT = 8080 # PADRÃO 5000
+PORT = 8080  # padrão: 5000
 ```
 
 ---
@@ -190,46 +215,48 @@ PORT = 8080 # PADRÃO 5000
 
 ## 🌍 Visão de Futuro
 
-O objetivo deste projeto é evoluir de um sistema local para uma solução completa acessível pela internet, mantendo como pilares a **segurança, simplicidade e autonomia do usuário**.
+O projeto está sendo desenvolvido para evoluir de um sistema local para uma solução completa acessível pela internet, mantendo como pilares:
 
-A ideia é permitir que qualquer pessoa possa hospedar seu próprio sistema de armazenamento e acessá-lo de qualquer lugar, sem depender de serviços terceiros.
+* 🔒 Segurança
+* ⚙️ Simplicidade
+* 🧠 Autonomia do usuário
+
+O objetivo é permitir que qualquer pessoa possa hospedar seu próprio sistema de armazenamento e acessá-lo de qualquer lugar com facilidade.
 
 ---
 
 ### 🔐 Segurança como Prioridade
 
-A disponibilização em ambiente externo exige um nível elevado de proteção. Por isso, o projeto está sendo desenvolvido com foco contínuo em segurança.
+A disponibilização externa exige um alto nível de proteção. Por isso, a segurança é tratada como prioridade central no desenvolvimento.
 
 Entre os pontos em evolução:
 
 * Implementação de HTTPS (SSL/TLS)
 * Proteção contra CSRF e XSS
-* Fortalecimento do sistema de autenticação
-* Melhor gerenciamento de sessões
-* Validação rigorosa de uploads
-* Logs e auditoria de atividades
+* Rate limiting global
+* Autenticação em dois fatores (2FA)
+* Logs e auditoria de acessos
 * Controle de permissões (multiusuário)
 
-> * ⚠️ A versão que se encontra disponível para download e uso está configurada para funcionar apenas em rede local.
-> * Estou estudando sobre como levar ele para um ambiente externo de forma simples, segura e que qualquer pessoa possa configurar e fazer ela mesma.
+> ⚠️ Atualmente, o uso é recomendado em rede local até que os requisitos de segurança para acesso externo estejam totalmente implementados.
 
 ---
 
 ### 🚧 Desafios Atuais
 
-* Preparação para deploy em ambiente externo (VPS / cloud)
-* Configuração de rede (DNS, domínio, acesso remoto)
-* Automatização da instalação para usuários finais
-* Otimização para múltiplos acessos simultâneos
+* Deploy em ambiente externo (VPS / cloud)
+* Configuração de domínio e acesso remoto
+* Suporte a múltiplos usuários simultâneos
+* Automatização da instalação
 
 ---
 
 ### 🎯 Objetivo Final
 
-Criar uma plataforma de armazenamento em nuvem que seja:
+Criar uma plataforma que seja:
 
 * 🔒 Segura por padrão
-* ⚙️ Simples de instalar e usar
+* ⚙️ Simples de instalar
 * 🌐 Acessível de qualquer lugar
 * 🧠 Independente de serviços terceiros
 
@@ -237,11 +264,22 @@ Criar uma plataforma de armazenamento em nuvem que seja:
 
 ## 🚧 Roadmap
 
-* [ ] Upload com barra de progresso
-* [ ] Drag & Drop
+### 🔥 Concluído recentemente
+
+* [x] Upload com barra de progresso
+* [x] Drag & Drop global
+* [x] Painel de uploads
+* [x] Atualização dinâmica sem reload
+
+---
+
+### 🚀 Próximos passos
+
 * [ ] Compartilhamento por link
 * [ ] Sistema multiusuário
 * [ ] Logs de atividade
+* [ ] Upload de pastas
+* [ ] Exclusão dinâmica sem reload
 * [ ] Deploy online seguro
 
 ---
