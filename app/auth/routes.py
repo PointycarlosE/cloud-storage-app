@@ -57,6 +57,8 @@ def logout():
     flash('Você foi desconectado com sucesso', 'success')
     return redirect(url_for('auth.login'))
 
+# app/auth/routes.py (atualizar a parte do POST do setup)
+
 @auth_bp.route('/setup', methods=['GET', 'POST'])
 def setup():
     from app.config import IS_FIRST_RUN, CONFIGURADO, ROOT_DIR
@@ -68,6 +70,7 @@ def setup():
     
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
+        nome = request.form.get('nome', username).strip()  # Novo campo nome
         password = request.form.get('password', '')
         confirm = request.form.get('confirm_password', '')
         repo_path = request.form.get('repo_path', '').strip()
@@ -76,6 +79,9 @@ def setup():
         if not username:
             flash('Digite um nome de usuário', 'error')
             return render_template('setup.html')
+        
+        if not nome:
+            nome = username  # Se não fornecer nome, usa o username
         
         if not password:
             flash('Digite uma senha', 'error')
@@ -112,6 +118,7 @@ SECRET_KEY={secret_key}
 
 # Credenciais do administrador
 ADMIN_USERNAME={username}
+ADMIN_NOME={nome}
 ADMIN_PASSWORD_HASH={password_hash}
 
 # Pasta base do repositório (onde os arquivos serão armazenados)
@@ -128,7 +135,7 @@ PASTA_BASE={repo_path_salvo}
                 os.makedirs(repo_path_salvo)
                 print(f"✅ Pasta do repositório criada: {repo_path_salvo}")
             
-            flash('✅ Conta criada com sucesso! Reinicie o servidor para aplicar as configurações.', 'success')
+            flash('✅ Conta criada com sucesso! Agora você pode fazer login.', 'success')
             return redirect(url_for('auth.login'))
             
         except Exception as e:

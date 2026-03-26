@@ -24,6 +24,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', secrets.token_hex(32))
 
 # Credenciais do usuário
 ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME')
+ADMIN_NOME = os.environ.get('ADMIN_NOME', ADMIN_USERNAME)  # Novo
 ADMIN_PASSWORD_HASH = os.environ.get('ADMIN_PASSWORD_HASH')
 PASTA_BASE = os.environ.get('PASTA_BASE')
 

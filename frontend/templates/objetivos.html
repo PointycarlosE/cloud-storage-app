@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Objetivos - Meu Drive Pessoal</title>
-    <!-- Script de tema ANTES do CSS para evitar flash -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+
     <script>
         (function () {
             try {
@@ -17,91 +19,100 @@
             }
         })();
     </script>
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
-<body>
-    <header class="cabecalho">
-        <nav class="menu-principal">
-            <ul class="menu-lista">
-                <li><a href="{{ url_for('main.objetivos') }}" class="menu-link">📋 Objetivos</a></li>
-                <li><a href="{{ url_for('file.explorar') }}" class="menu-link">📁 Explorador</a></li>
-            </ul>
+<body class="page-simple">
+    <header class="header-simple">
+        <nav class="header-nav">
+            <a href="{{ url_for('file.explorar') }}">📁 Explorador</a>
+            <a href="{{ url_for('main.objetivos') }}" style="color: var(--primary);">📋 Objetivos</a>
         </nav>
-
-        <div style="display: flex; align-items: center; gap: 0.8rem;">
-            <!-- Botão de tema -->
-            <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema">
+        <div class="header-actions">
+            <button id="theme-toggle" class="theme-btn-simple" aria-label="Alternar tema">
                 <span class="theme-icon">☀️</span>
             </button>
-
-            <!-- Botão de logout -->
             {% if current_user.is_authenticated %}
-            <a href="{{ url_for('auth.logout') }}" class="logout-btn" title="Sair">
+            <a href="{{ url_for('auth.logout') }}" class="logout-btn-simple" title="Sair">
                 <span class="logout-icon">🚪</span>
             </a>
             {% endif %}
         </div>
     </header>
 
-    <main class="conteudo-principal">
-        <h1>Objetivos do Projeto</h1>
+    <main class="content-centered" style="display: block; padding: 40px 24px;">
+        <div style="max-width: 1200px; margin: 0 auto;">
+            <h1 style="font-size: 2rem; margin-bottom: 8px; text-align: center;">🎯 Objetivos do Projeto</h1>
+            <p style="text-align: center; color: var(--text-secondary); margin-bottom: 48px;">Meu Drive Pessoal -
+                Explorador de Arquivos</p>
 
-        <div
-            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
-            <div class="acoes-card">
-                <h2>📂 Base do Explorador</h2>
-                <ul>
-                    <li>Ler pastas do sistema</li>
-                    <li>Listar arquivos dinamicamente</li>
-                    <li>Diferenciar arquivos e pastas</li>
-                    <li>Navegação por rotas dinâmicas</li>
-                    <li>Template único reutilizável</li>
-                    <li>Botão voltar funcional</li>
-                </ul>
+            <div class="objectives-grid">
+                <div class="objective-card">
+                    <h2>📂 Base do Explorador</h2>
+                    <ul>
+                        <li>Ler pastas do sistema</li>
+                        <li>Listar arquivos dinamicamente</li>
+                        <li>Diferenciar arquivos e pastas</li>
+                        <li>Navegação por rotas dinâmicas</li>
+                        <li>Template único reutilizável</li>
+                        <li>Botão voltar funcional</li>
+                    </ul>
+                </div>
+
+                <div class="objective-card">
+                    <h2>📦 Funcionalidades</h2>
+                    <ul>
+                        <li>Downloads de arquivos ao clicar</li>
+                        <li>Navegação segura dentro da pasta base</li>
+                        <li>Breadcrumb (Caminho Clicável)</li>
+                        <li>Tratamento de erros</li>
+                        <li>Upload de arquivos com progresso</li>
+                        <li>Criar pastas pelo site</li>
+                        <li>Drag & drop para upload</li>
+                        <li>Seleção múltipla com ações em lote</li>
+                    </ul>
+                </div>
+
+                <div class="objective-card">
+                    <h2>📱 Usabilidade</h2>
+                    <ul>
+                        <li>Interface responsiva</li>
+                        <li>Botões grandes e clicáveis</li>
+                        <li>Ícones claros por tipo de arquivo</li>
+                        <li>Layout adaptado para mobile</li>
+                        <li>Tema claro/escuro com persistência</li>
+                        <li>Visualização em grade/lista</li>
+                        <li>Lightbox para imagens</li>
+                        <li>Player de áudio integrado</li>
+                    </ul>
+                </div>
+
+                <div class="objective-card">
+                    <h2>🔒 Segurança</h2>
+                    <ul>
+                        <li>Sistema de login completo</li>
+                        <li>Proteção contra força bruta</li>
+                        <li>Senhas com hash (Werkzeug)</li>
+                        <li>Sessões seguras com cookies HttpOnly</li>
+                        <li>Limitar acesso a pasta específica</li>
+                        <li>Bloquear acesso com ../</li>
+                        <li>Primeira execução com setup intuitivo</li>
+                    </ul>
+                </div>
             </div>
 
-            <div class="acoes-card">
-                <h2>📦 Funcionalidades</h2>
-                <ul>
-                    <li>Downloads de arquivos ao clicar</li>
-                    <li>Navegação segura dentro da pasta base</li>
-                    <li>Breadcrumb (Caminho Clicável)</li>
-                    <li>Tratamento de erros</li>
-                    <li>Upload de arquivos</li>
-                    <li>Criar pastas pelo site</li>
-                </ul>
+            <div style="text-align: center; margin-top: 48px;">
+                <a href="{{ url_for('file.explorar') }}" class="btn-primary"
+                    style="display: inline-flex; width: auto; padding: 12px 32px;">
+                    🚀 Acessar Explorador
+                </a>
             </div>
-
-            <div class="acoes-card">
-                <h2>📱 Usabilidade</h2>
-                <ul>
-                    <li>Interface responsiva</li>
-                    <li>Botões grandes e clicáveis</li>
-                    <li>Ícones claros</li>
-                    <li>Layout adaptado para mobile</li>
-                    <li>Tema claro/escuro</li>
-                </ul>
-            </div>
-
-            <div class="acoes-card">
-                <h2>🔒 Segurança</h2>
-                <ul>
-                    <li>Limitar a uma pasta específica</li>
-                    <li>Bloquear acesso com ../</li>
-                    <li>Adicionar senhas (futuro)</li>
-                    <li>Não expor o disco inteiro</li>
-                </ul>
-            </div>
-        </div>
-
-        <div style="margin-top: 2rem; text-align: center;">
-            <a href="{{ url_for('file.explorar') }}" class="botao botao-primario">🚀 Acessar Explorador</a>
         </div>
     </main>
 
-    <footer class="rodape">
-        <p>Meu Drive Pessoal © 2024 - Seu repositório de arquivos</p>
+    <footer class="footer-simple">
+        <p>Meu Drive Pessoal © 2024 - Seu repositório de arquivos pessoal</p>
     </footer>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>

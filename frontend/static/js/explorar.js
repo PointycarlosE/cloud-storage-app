@@ -338,13 +338,14 @@ document.addEventListener('DOMContentLoaded', function () {
         Object.values(ordenacaoBotoes).forEach(btn => {
             if (btn) {
                 btn.classList.remove('active');
+                btn.removeAttribute('data-order'); // Limpa atributo antigo
             }
         });
 
         const btnAtual = ordenacaoBotoes[ordenacaoAtual.criterio];
         if (btnAtual) {
             btnAtual.classList.add('active');
-            btnAtual.setAttribute('data-ordem', ordenacaoAtual.ordem);
+            btnAtual.setAttribute('data-order', ordenacaoAtual.ordem);
         }
     }
 
@@ -477,7 +478,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    Object.entries(ordenacaoBotoes).forEach(([criterio, btn]) => {
+        Object.entries(ordenacaoBotoes).forEach(([criterio, btn]) => {
         if (btn) {
             btn.addEventListener('click', function () {
                 const clicouNoMesmo = ordenacaoAtual.criterio === criterio;
@@ -940,25 +941,22 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 })();
 
+// ===== DRAG & DROP E UPLOAD =====
 document.addEventListener('DOMContentLoaded', function () {
     const overlay = document.getElementById('global-drop-overlay');
-    const progressContainer = document.getElementById('upload-progress');
-    const progressFill = document.getElementById('progress-fill');
-    const progressText = document.getElementById('progress-text');
-
     let dragCounter = 0;
 
-    // 🔥 Detecta entrada de arquivos
+    // Detecta entrada de arquivos para drag & drop
     document.addEventListener('dragenter', (e) => {
-        if (e.dataTransfer.types.includes('Files')) {
+        if (e.dataTransfer.types && e.dataTransfer.types.includes('Files')) {
             dragCounter++;
-            overlay.classList.add('active');
+            if (overlay) overlay.classList.add('active');
         }
     });
 
-    document.addEventListener('dragleave', () => {
+    document.addEventListener('dragleave', (e) => {
         dragCounter--;
-        if (dragCounter <= 0) {
+        if (dragCounter <= 0 && overlay) {
             overlay.classList.remove('active');
         }
     });
@@ -969,99 +967,39 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.addEventListener('drop', (e) => {
         e.preventDefault();
-
-        overlay.classList.remove('active');
+        if (overlay) overlay.classList.remove('active');
         dragCounter = 0;
 
         const files = e.dataTransfer.files;
-        uploadFiles(files);
+        // Usar a função global de upload definida no main.js
+        if (files && files.length > 0 && typeof window.uploadFiles === 'function') {
+            window.uploadFiles(files);
+        }
     });
-
-    function uploadFiles(files) {
-        if (!files.length) return;
-
-        const panel = document.getElementById('upload-panel');
-        const list = document.getElementById('upload-list');
-
-        panel.style.display = 'flex';
-
-        const caminho = window.location.pathname.replace('/explorar', '');
-
-        Array.from(files).forEach(file => {
-            const item = document.createElement('div');
-            item.className = 'upload-item';
-
-            item.innerHTML = `
-            <div class="upload-name">${file.name}</div>
-            <div class="upload-bar">
-                <div class="upload-fill"></div>
-            </div>
-            <div class="upload-status">Enviando...</div>
-        `;
-
-            list.appendChild(item);
-
-            const fill = item.querySelector('.upload-fill');
-            const status = item.querySelector('.upload-status');
-
-            const formData = new FormData();
-            formData.append('arquivo', file);
-
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', `/upload${caminho}`, true);
-
-            xhr.upload.addEventListener('progress', (e) => {
-                if (e.lengthComputable) {
-                    const percent = Math.round((e.loaded / e.total) * 100);
-                    fill.style.width = percent + '%';
-                }
-            });
-
-            xhr.onload = () => {
-                if (xhr.status === 200) {
-                    fill.style.width = '100%';
-                    status.textContent = 'Concluído';
-                    item.classList.add('success');
-
-                    showToast(`"${file.name}" enviado`, 'success');
-                } else {
-                    status.textContent = 'Erro no upload';
-                    item.classList.add('error');
-
-                    showToast(`Erro ao enviar "${file.name}"`, 'error');
-                }
-            };
-
-            xhr.onerror = () => {
-                status.textContent = 'Erro de conexão';
-                item.classList.add('error');
-
-                showToast(`Erro de conexão`, 'error');
-            };
-
-            xhr.send(formData);
-        });
-
-        // 🔥 Atualiza depois de tudo
-        setTimeout(() => {
-            atualizarLista();
-        }, 800);
-    }
 });
 
+// ===== FUNÇÃO PARA FECHAR O PAINEL DE UPLOAD =====
 function fecharPainel() {
-    document.getElementById('upload-panel').style.display = 'none';
+    const panel = document.getElementById('upload-panel');
+    if (panel) {
+        panel.style.display = 'none';
+    }
 }
 
+// ===== FUNÇÃO PARA ATUALIZAR A LISTA DE ARQUIVOS =====
 async function atualizarLista() {
     const container = document.getElementById('file-list-container');
+    if (!container) return;
 
     const caminho = window.location.pathname.replace('/explorar', '');
-    const response = await fetch(`/partial/lista${caminho}`);
-
-    const html = await response.text();
-
-    container.innerHTML = html;
-
-    showToast('Atualizado!', 'info');
+    try {
+        const response = await fetch(`/partial/lista${caminho}`);
+        if (response.ok) {
+            const html = await response.text();
+            container.innerHTML = html;
+            showToast('📂 Lista atualizada!', 'info', 2000);
+        }
+    } catch (error) {
+        console.error('Erro ao atualizar lista:', error);
+    }
 }

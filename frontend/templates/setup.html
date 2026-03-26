@@ -1,14 +1,15 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" data-theme="light">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configuração Inicial - Meu Drive Pessoal</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
-    
+
     <script>
-        (function() {
+        (function () {
             try {
                 const savedTheme = localStorage.getItem('theme') || 'light';
                 document.documentElement.setAttribute('data-theme', savedTheme);
@@ -17,91 +18,94 @@
             }
         })();
     </script>
-    
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body>
-    <main class="conteudo-principal">
-        <div class="login-container">
-            <div class="login-card">
-                <div class="login-header">
-                    <h1 class="login-title">🎉 Bem-vindo ao Meu Drive Pessoal!</h1>
-                    <p class="login-subtitle">Vamos criar sua conta de administrador</p>
+
+<body class="page-simple">
+    <header class="header-simple">
+        <nav class="header-nav">
+            <a href="{{ url_for('main.objetivos') }}">📋 Objetivos</a>
+        </nav>
+        <div class="header-actions">
+            <button id="theme-toggle" class="theme-btn-simple" aria-label="Alternar tema">
+                <span class="theme-icon">☀️</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="content-centered">
+        <div class="form-card">
+            <div class="form-card-header">
+                <h1 class="form-card-title">🎉 Bem-vindo!</h1>
+                <p class="form-card-subtitle">Vamos criar sua conta de administrador</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <form method="POST" class="login-form" id="setup-form">
+                <div class="form-group">
+                    <label for="nome" class="form-label">👤 Nome completo</label>
+                    <input type="text" name="nome" id="nome" class="form-input" placeholder="Seu nome completo"
+                        autofocus>
+                    <div class="form-error" id="nome-error"></div>
+                    <span class="form-small">Como você quer ser chamado</span>
                 </div>
-                
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category }}">{{ message }}</div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-                
-                <form method="POST" class="login-form" id="setup-form">
-                    <div class="form-group">
-                        <label for="username" class="form-label">👤 Nome de usuário</label>
-                        <input type="text" 
-                               name="username" 
-                               id="username" 
-                               class="form-input" 
-                               placeholder="admin"
-                               autofocus>
-                        <div class="form-error" id="username-error"></div>
-                        <small style="color: var(--cor-texto-secundario); font-size: 0.7rem;">
-                            Será usado para fazer login
-                        </small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="password" class="form-label">🔒 Senha</label>
-                        <input type="password" 
-                               name="password" 
-                               id="password" 
-                               class="form-input" 
-                               placeholder="Digite uma senha segura">
-                        <div class="form-error" id="password-error"></div>
-                        <small style="color: var(--cor-texto-secundario); font-size: 0.7rem;">
-                            Mínimo 6 caracteres
-                        </small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="confirm_password" class="form-label">✓ Confirmar senha</label>
-                        <input type="password" 
-                               name="confirm_password" 
-                               id="confirm_password" 
-                               class="form-input" 
-                               placeholder="Digite a senha novamente">
-                        <div class="form-error" id="confirm-error"></div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="repo_path" class="form-label">📁 Pasta do repositório</label>
-                        <input type="text" 
-                               name="repo_path" 
-                               id="repo_path" 
-                               class="form-input" 
-                               placeholder="C:\Users\SeuUsuario\MeusArquivos">
-                        <div class="form-error" id="repo-error"></div>
-                        <small style="color: var(--cor-texto-secundario); font-size: 0.7rem;">
-                            💡 Use o formato do Windows: C:\Users\SeuUsuario\Pasta
-                        </small>
-                    </div>
-                    
-                    <button type="submit" class="botao botao-primario login-btn">
-                        🚀 Criar conta e começar
-                    </button>
-                </form>
-                
-                <div class="login-footer">
-                    <p>Esta configuração será feita apenas uma vez</p>
+
+                <div class="form-group">
+                    <label for="username" class="form-label">🔑 Nome de usuário (login)</label>
+                    <input type="text" name="username" id="username" class="form-input" placeholder="usuario">
+                    <div class="form-error" id="username-error"></div>
+                    <span class="form-small">Será usado para fazer login</span>
                 </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">🔒 Senha</label>
+                    <input type="password" name="password" id="password" class="form-input"
+                        placeholder="Digite uma senha segura">
+                    <div class="form-error" id="password-error"></div>
+                    <span class="form-small">Mínimo 6 caracteres</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm_password" class="form-label">✓ Confirmar senha</label>
+                    <input type="password" name="confirm_password" id="confirm_password" class="form-input"
+                        placeholder="Digite a senha novamente">
+                    <div class="form-error" id="confirm-error"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="repo_path" class="form-label">📁 Pasta do repositório</label>
+                    <input type="text" name="repo_path" id="repo_path" class="form-input"
+                        placeholder="C:\Users\SeuUsuario\MeusArquivos">
+                    <div class="form-error" id="repo-error"></div>
+                    <span class="form-small">💡 Use o formato do Windows: C:\Users\SeuUsuario\Pasta</span>
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    🚀 Criar conta e começar
+                </button>
+            </form>
+
+            <div class="form-card-footer" style="text-align: center; margin-top: 24px;">
+                <p style="font-size: 0.75rem; color: var(--text-secondary);">Esta configuração será feita apenas uma vez
+                </p>
             </div>
         </div>
     </main>
-    
+
+    <footer class="footer-simple">
+        <p>Meu Drive Pessoal © 2024 - Seu repositório de arquivos pessoal</p>
+    </footer>
+
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-    
+
     <script>
         // Validação inline no setup
         const setupForm = document.getElementById('setup-form');
@@ -109,7 +113,7 @@
         const passwordInput = document.getElementById('password');
         const confirmInput = document.getElementById('confirm_password');
         const repoPathInput = document.getElementById('repo_path');
-        
+
         const usernameError = document.getElementById('username-error');
         const passwordError = document.getElementById('password-error');
         const confirmError = document.getElementById('confirm-error');
@@ -129,8 +133,7 @@
 
         function validateSetupForm() {
             let isValid = true;
-            
-            // Validar usuário
+
             if (!usernameInput.value.trim()) {
                 showError(usernameInput, usernameError, 'Digite um nome de usuário');
                 isValid = false;
@@ -140,8 +143,7 @@
             } else {
                 clearError(usernameInput, usernameError);
             }
-            
-            // Validar senha
+
             if (!passwordInput.value) {
                 showError(passwordInput, passwordError, 'Digite uma senha');
                 isValid = false;
@@ -151,40 +153,37 @@
             } else {
                 clearError(passwordInput, passwordError);
             }
-            
-            // Validar confirmação de senha
+
             if (passwordInput.value && confirmInput.value !== passwordInput.value) {
                 showError(confirmInput, confirmError, 'As senhas não coincidem');
                 isValid = false;
             } else if (confirmInput.value && passwordInput.value) {
                 clearError(confirmInput, confirmError);
             }
-            
-            // Validar caminho do repositório
+
             if (!repoPathInput.value.trim()) {
                 showError(repoPathInput, repoError, 'Digite o caminho da pasta do repositório');
                 isValid = false;
             } else {
                 clearError(repoPathInput, repoError);
             }
-            
+
             return isValid;
         }
 
-        setupForm.addEventListener('submit', function(e) {
+        setupForm.addEventListener('submit', function (e) {
             if (!validateSetupForm()) {
                 e.preventDefault();
             }
         });
 
-        // Limpar erros ao digitar
-        usernameInput.addEventListener('input', function() {
+        usernameInput.addEventListener('input', function () {
             if (usernameInput.value.trim()) {
                 clearError(usernameInput, usernameError);
             }
         });
-        
-        passwordInput.addEventListener('input', function() {
+
+        passwordInput.addEventListener('input', function () {
             if (passwordInput.value && passwordInput.value.length >= 6) {
                 clearError(passwordInput, passwordError);
             } else if (passwordInput.value && passwordInput.value.length < 6) {
@@ -192,8 +191,7 @@
             } else if (!passwordInput.value) {
                 showError(passwordInput, passwordError, 'Digite uma senha');
             }
-            
-            // Revalidar confirmação se já tiver sido preenchida
+
             if (confirmInput.value) {
                 if (confirmInput.value !== passwordInput.value) {
                     showError(confirmInput, confirmError, 'As senhas não coincidem');
@@ -202,20 +200,21 @@
                 }
             }
         });
-        
-        confirmInput.addEventListener('input', function() {
+
+        confirmInput.addEventListener('input', function () {
             if (confirmInput.value !== passwordInput.value) {
                 showError(confirmInput, confirmError, 'As senhas não coincidem');
             } else {
                 clearError(confirmInput, confirmError);
             }
         });
-        
-        repoPathInput.addEventListener('input', function() {
+
+        repoPathInput.addEventListener('input', function () {
             if (repoPathInput.value.trim()) {
                 clearError(repoPathInput, repoError);
             }
         });
     </script>
 </body>
+
 </html>

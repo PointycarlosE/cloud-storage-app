@@ -5,8 +5,9 @@ import os
 class User:
     """Modelo de usuário seguro"""
     
-    def __init__(self, username, password_hash=None):
+    def __init__(self, username, nome=None, password_hash=None):
         self.username = username
+        self.nome = nome if nome else username  # Se não tiver nome, usa o username
         self.password_hash = password_hash
         self._is_authenticated = True
         self._is_active = True
@@ -24,12 +25,12 @@ class User:
     @staticmethod
     def get(username):
         """Busca usuário pelo nome"""
-        # CORRIGIR: ler do ambiente diretamente (não precisa de import)
         admin_username = os.environ.get('ADMIN_USERNAME', 'admin')
+        admin_nome = os.environ.get('ADMIN_NOME', admin_username)  # Novo campo
         admin_password_hash = os.environ.get('ADMIN_PASSWORD_HASH', '')
         
         if username == admin_username:
-            return User(admin_username, admin_password_hash)
+            return User(admin_username, admin_nome, admin_password_hash)
         return None
     
     @property

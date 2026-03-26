@@ -1,22 +1,19 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Explorador de Arquivos - Meu Drive Pessoal</title>
+    <title>Meu Drive Pessoal</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
 
     <!-- Script de tema ANTES do CSS para evitar flash -->
     <script>
-        // Aplicar tema imediatamente antes da renderização
         (function () {
             try {
                 const savedTheme = localStorage.getItem('theme') || 'light';
                 document.documentElement.setAttribute('data-theme', savedTheme);
-
-                // Também guarda o tema para o ícone (será usado depois)
                 window.__initialTheme = savedTheme;
             } catch (e) {
                 console.log('Erro ao acessar localStorage:', e);
@@ -28,170 +25,186 @@
 </head>
 
 <body>
-    <header class="cabecalho">
-        <nav class="menu-principal">
-            <ul class="menu-lista">
-                <li><a href="{{ url_for('main.objetivos') }}" class="menu-link">📋 Objetivos</a></li>
-                <li><a href="{{ url_for('file.explorar') }}" class="menu-link">📁 Explorador</a></li>
-            </ul>
-        </nav>
 
-        <div style="display: flex; align-items: center; gap: 0.8rem;">
-            <!-- Botão de tema -->
-            <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema">
-                <span class="theme-icon">☀️</span>
-            </button>
+    <div class="app">
 
-            <!-- Botão de logout -->
-            {% if current_user.is_authenticated %}
-            <a href="{{ url_for('auth.logout') }}" class="logout-btn" title="Sair">
-                <span class="logout-icon">🚪</span>
-            </a>
-            {% endif %}
-        </div>
-    </header>
-
-    <main class="conteudo-principal">
-        <!-- Caminho de navegação com truncamento inteligente -->
-        <div class="caminho-wrapper">
-            <div class="caminho" id="breadcrumb-container">
-                <a href="{{ url_for('file.explorar') }}" class="caminho-link">📁 Repositório</a>
-
-                {% if partes %}
-                {% for parte in partes %}
-                <span class="caminho-separador">/</span>
-                {% if loop.last %}
-                <span class="caminho-atual" data-parte="{{ parte.nome }}" data-caminho="{{ parte.caminho }}">{{
-                    parte.nome }}</span>
-                {% else %}
-                <a href="{{ url_for('file.explorar', caminho=parte.caminho) }}" class="caminho-link"
-                    data-parte="{{ parte.nome }}" data-caminho="{{ parte.caminho }}">{{ parte.nome }}</a>
-                {% endif %}
-                {% endfor %}
-                {% endif %}
+        <!-- ===== SIDEBAR ===== -->
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">
+                <span class="logo-icon">☁️</span>
+                <span class="logo-text">Meu Drive</span>
             </div>
-        </div>
 
-        <!-- Ações principais -->
-        <div class="acoes-principais">
-            <div class="acoes-card upload-card">
-                <h3 class="acoes-titulo">📤 Upload de Arquivos</h3>
-                <form action="{{ url_for('file.upload', caminho=caminho_atual) }}" method="post"
-                    enctype="multipart/form-data" class="form-upload">
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('file.explorar') }}" class="nav-item active">
+                    <span class="nav-icon">📁</span>
+                    <span class="nav-text">Meus arquivos</span>
+                </a>
+                <a href="{{ url_for('main.objetivos') }}" class="nav-item" id="nav-objetivos"
+                    style="opacity: 0.6; cursor: pointer;">📋 Objetivos</a>
+                <a href="#" class="nav-item" id="nav-favoritos" style="opacity: 0.6; cursor: not-allowed;">
+                    <span class="nav-icon">⭐</span>
+                    <span class="nav-text">Favoritos</span>
+                    <span class="nav-badge">Em breve</span>
+                </a>
+                <a href="#" class="nav-item" id="nav-lixeira" style="opacity: 0.6; cursor: not-allowed;">
+                    <span class="nav-icon">🗑️</span>
+                    <span class="nav-text">Lixeira</span>
+                    <span class="nav-badge">Em breve</span>
+                </a>
+            </nav>
 
-                    <input type="file" name="arquivo" id="arquivo" class="input-upload" multiple required>
-                    <label for="arquivo" class="botao botao-secundario">
-                        📂 Escolher arquivos
-                    </label>
-                    <button type="submit" class="botao botao-primario">
-                        📤 Enviar
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <span class="user-icon">👤</span>
+                    <span class="user-name">{{ current_user.nome if current_user.is_authenticated else 'Usuário'
+                        }}</span>
+                </div>
+                <a href="{{ url_for('auth.logout') }}" class="logout-link">
+                    <span class="logout-icon">🚪</span>
+                    <span>Sair</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ===== MAIN ===== -->
+        <main class="main">
+
+            <!-- ===== TOPBAR ===== -->
+            <header class="topbar">
+                <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Menu">
+                    <span>☰</span>
+                </button>
+
+                <div class="search-wrapper">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="pesquisa-input" class="search-input" placeholder="Buscar arquivos..."
+                        autocomplete="off">
+                    <button id="pesquisa-limpar" class="search-clear" title="Limpar busca">✕</button>
+                </div>
+
+                <div class="top-actions">
+                    <div class="view-toggle">
+                        <button id="view-grid" class="view-btn active" title="Visualização em grade">
+                            <span>🗂️</span> Grade
+                        </button>
+                        <button id="view-list" class="view-btn" title="Visualização em lista">
+                            <span>📋</span> Lista
+                        </button>
+                    </div>
+                    <button id="theme-toggle" class="theme-btn" aria-label="Alternar tema">
+                        <span class="theme-icon">☀️</span>
                     </button>
-                </form>
+                </div>
+            </header>
+
+            <!-- ===== CONTEÚDO ===== -->
+            <div class="content">
+
+                <!-- BREADCRUMB -->
+                <div class="breadcrumb-wrapper">
+                    <div class="breadcrumb" id="breadcrumb-container">
+                        <a href="{{ url_for('file.explorar') }}" class="breadcrumb-link">Início</a>
+                        {% if partes %}
+                        {% for parte in partes %}
+                        <span class="breadcrumb-separator">/</span>
+                        {% if loop.last %}
+                        <span class="breadcrumb-current">{{ parte.nome }}</span>
+                        {% else %}
+                        <a href="{{ url_for('file.explorar', caminho=parte.caminho) }}" class="breadcrumb-link">{{
+                            parte.nome }}</a>
+                        {% endif %}
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- AÇÕES RÁPIDAS -->
+                <div class="actions-bar">
+                    <div class="upload-area">
+                        <label for="arquivo" class="action-btn upload-btn">
+                            <span>📤</span> Upload
+                        </label>
+                        <input type="file" name="arquivo" id="arquivo" class="upload-input" multiple
+                            style="display: none;">
+
+                        <button class="action-btn create-folder-btn" id="create-folder-trigger">
+                            <span>📁</span> Nova pasta
+                        </button>
+                    </div>
+
+                    <div class="sort-bar">
+                        <span class="sort-label">Ordenar:</span>
+                        <div class="sort-buttons">
+                            <button id="ordenar-tipo" class="sort-btn active" data-order="asc">Tipo <span
+                                    class="sort-arrow">↑</span></button>
+                            <button id="ordenar-nome" class="sort-btn" data-order="asc">Nome <span
+                                    class="sort-arrow">↑</span></button>
+                            <button id="ordenar-tamanho" class="sort-btn" data-order="asc">Tamanho <span
+                                    class="sort-arrow">↑</span></button>
+                            <button id="ordenar-data" class="sort-btn" data-order="asc">Data <span
+                                    class="sort-arrow">↑</span></button>
+                        </div>
+                        <span class="item-count" id="view-total-itens">0</span>
+                        <span class="item-count-label">itens</span>
+                    </div>
+                </div>
+
+                <!-- BOTÃO VOLTAR (se houver pasta pai) -->
+                {% if pasta_pai is not none %}
+                <div class="back-button-wrapper">
+                    <a href="{{ url_for('file.explorar', caminho=pasta_pai) }}" class="back-btn">
+                        <span>⬅️</span> Voltar para pasta anterior
+                    </a>
+                </div>
+                {% endif %}
+
+                <!-- BARRA DE SELEÇÃO MÚLTIPLA -->
+                <div id="selecao-barra" class="selection-bar" style="display: none;">
+                    <div class="selection-info">
+                        <span id="selecao-contador">0</span> itens selecionados
+                    </div>
+                    <div class="selection-actions">
+                        <button id="selecao-select-all" class="selection-btn">✅ Selecionar todos</button>
+                        <button id="selecao-clear" class="selection-btn">✕ Limpar</button>
+                        <button id="selecao-delete" class="selection-btn delete-btn">🗑️ Excluir</button>
+                        <button id="selecao-download" class="selection-btn download-btn">📦 Download ZIP</button>
+                    </div>
+                </div>
+
+                <!-- LISTAGEM DE ARQUIVOS -->
+                <div id="file-list-container">
+                    {% include 'partials/_lista_arquivos.html' %}
+                </div>
+
             </div>
 
-            <div class="acoes-card pasta-card">
-                <h3 class="acoes-titulo">📂 Criar Nova Pasta</h3>
-                <form action="{{ url_for('file.criar_pasta', caminho=caminho_atual) }}" method="post"
-                    class="form-pasta">
-                    <input type="text" name="nome_pasta" placeholder="Nome da pasta" required class="input-pasta">
-                    <button type="submit" class="botao botao-primario">Criar</button>
-                </form>
+            <!-- MODAL CRIAR PASTA -->
+            <div id="create-folder-modal" class="modal-overlay" style="display: none;">
+                <div class="modal-container modal-small">
+                    <div class="modal-header">
+                        <h3 class="modal-title">📁 Criar nova pasta</h3>
+                        <button class="modal-close" id="close-folder-modal">&times;</button>
+                    </div>
+                    <form action="{{ url_for('file.criar_pasta', caminho=caminho_atual) }}" method="post"
+                        class="modal-form">
+                        <div class="modal-body">
+                            <input type="text" name="nome_pasta" placeholder="Nome da pasta" required
+                                class="modal-input">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="modal-btn modal-btn-cancel"
+                                id="cancel-folder-modal">Cancelar</button>
+                            <button type="submit" class="modal-btn modal-btn-confirm">Criar</button>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
 
-        <!-- Barra de pesquisa -->
-        <div class="pesquisa-wrapper">
-            <div class="pesquisa-container">
-                <span class="pesquisa-icone">🔍</span>
-                <input type="text" id="pesquisa-input" class="pesquisa-input"
-                    placeholder="Pesquisar arquivos e pastas..." autocomplete="off">
-                <button id="pesquisa-limpar" class="pesquisa-limpar" title="Limpar busca">✕</button>
-            </div>
-            <div id="pesquisa-contador" class="pesquisa-contador"></div>
-        </div>
+        </main>
+    </div>
 
-        <!-- Barra de ordenação -->
-        <div class="ordenacao-wrapper">
-            <span class="ordenacao-label">Ordenar por:</span>
-            <div class="ordenacao-container">
-                <button id="ordenar-nome" class="ordenacao-btn" data-ordem="asc">
-                    <span>Nome</span>
-                    <span class="ordenacao-seta">↑</span>
-                </button>
-                <button id="ordenar-tipo" class="ordenacao-btn active" data-ordem="asc">
-                    <span>Tipo</span>
-                    <span class="ordenacao-seta">↑</span>
-                </button>
-                <button id="ordenar-tamanho" class="ordenacao-btn" data-ordem="asc">
-                    <span>Tamanho</span>
-                    <span class="ordenacao-seta">↑</span>
-                </button>
-                <button id="ordenar-data" class="ordenacao-btn" data-ordem="asc">
-                    <span>Data</span>
-                    <span class="ordenacao-seta">↑</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Barra de visualização -->
-        <div class="view-toggle-wrapper">
-            <div class="view-toggle-container">
-                <button id="view-grid" class="view-toggle-btn active" title="Visualização em grade">
-                    <span class="view-icon">🗂️</span> Grade
-                </button>
-                <button id="view-list" class="view-toggle-btn" title="Visualização em lista">
-                    <span class="view-icon">📋</span> Lista
-                </button>
-            </div>
-            <span class="view-info">Itens: <span id="view-total-itens">0</span></span>
-        </div>
-
-        <!-- Botão voltar -->
-        {% if pasta_pai is not none %}
-        <div class="voltar-wrapper">
-            <a href="{{ url_for('file.explorar', caminho=pasta_pai) }}" class="botao-voltar">
-                ⬅️ Voltar para pasta anterior
-            </a>
-        </div>
-        {% endif %}
-
-        <!-- Barra de seleção múltipla (inicialmente oculta) -->
-        <div id="selecao-barra" class="selecao-barra" style="display: none;">
-            <div class="selecao-info">
-                <span id="selecao-contador">0</span> itens selecionados
-            </div>
-            <div class="selecao-acoes">
-                <button id="selecao-select-all" class="selecao-btn" title="Selecionar todos (Ctrl+A)">
-                    <span class="selecao-icon">✅</span> Selecionar todos
-                </button>
-                <button id="selecao-clear" class="selecao-btn" title="Limpar seleção">
-                    <span class="selecao-icon">✕</span> Limpar
-                </button>
-                <button id="selecao-delete" class="selecao-btn selecao-btn-delete" title="Excluir selecionados">
-                    <span class="selecao-icon">🗑️</span> Excluir
-                </button>
-                <button id="selecao-download" class="selecao-btn selecao-btn-download" title="Download em ZIP">
-                    <span class="selecao-icon">📦</span> Download ZIP
-                </button>
-            </div>
-        </div>
-
-        <div id="file-list-container">
-            {% include 'partials/_lista_arquivos.html' %}
-        </div>
-        <!-- Mensagem se pasta vazia -->
-        {% if not pastas and not imagens and not audios and not arquivos %}
-        <div class="pasta-vazia">
-            <p>📂 Esta pasta está vazia</p>
-            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Use os formulários acima para adicionar arquivos ou
-                pastas</p>
-        </div>
-        {% endif %}
-    </main>
-
-    <footer class="rodape">
-        <p>Meu Drive Pessoal © 2024 - Seu repositório de arquivos</p>
-    </footer>
+    <!-- ===== COMPONENTES GLOBAIS ===== -->
 
     <!-- Lightbox para imagens -->
     <div class="lightbox-overlay" id="lightbox">
@@ -206,7 +219,6 @@
                 </div>
                 <div class="lightbox-footer">
                     <span class="lightbox-info" id="lightbox-info"></span>
-                    <!-- Lightbox - botão de excluir -->
                     <div class="lightbox-actions">
                         <a href="#" class="lightbox-btn download" id="lightbox-download" download>⬇️ Download</a>
                         <button class="lightbox-btn delete" id="lightbox-delete">🗑️ Excluir</button>
@@ -218,7 +230,7 @@
         <button class="lightbox-nav next" id="lightbox-next">›</button>
     </div>
 
-    <!-- Modal personalizado de confirmação -->
+    <!-- Modal de confirmação -->
     <div id="confirmModal" class="modal-overlay" style="display: none;">
         <div class="modal-container">
             <div class="modal-header">
@@ -244,23 +256,25 @@
         </div>
     </div>
 
+    <!-- Drag & Drop Overlay -->
     <div id="global-drop-overlay" class="drop-overlay">
         <div class="drop-message">
             📂 Solte os arquivos para enviar
         </div>
     </div>
 
+    <!-- Upload Panel -->
     <div id="upload-panel" class="upload-panel">
         <div class="upload-header">
-            <span>Uploads</span>
+            <span>📤 Uploads</span>
             <button onclick="fecharPainel()">✖</button>
         </div>
         <div id="upload-list"></div>
     </div>
 
-
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/explorar.js') }}"></script>
+
 </body>
 
 </html>

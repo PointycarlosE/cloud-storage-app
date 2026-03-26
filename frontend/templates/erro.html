@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Erro - Meu Drive Pessoal</title>
-    <!-- Script de tema ANTES do CSS para evitar flash -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+
     <script>
         (function () {
             try {
@@ -17,38 +19,35 @@
             }
         })();
     </script>
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
-<body>
-    <header class="cabecalho">
-        <nav class="menu-principal">
-            <ul class="menu-lista">
-                <li><a href="{{ url_for('main.home') }}" class="menu-link">🏠 Home</a></li>
-                <li><a href="{{ url_for('main.objetivos') }}" class="menu-link">📋 Objetivos</a></li>
-                <li><a href="{{ url_for('file.explorar') }}" class="menu-link">📁 Explorador</a></li>
-            </ul>
+<body class="page-simple">
+    <header class="header-simple">
+        <nav class="header-nav">
+            <a href="{{ url_for('file.explorar') }}">📁 Explorador</a>
+            <a href="{{ url_for('main.objetivos') }}">📋 Objetivos</a>
         </nav>
-
-        <!-- Botão de tema -->
-        <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema">
-            <span class="theme-icon">☀️</span>
-        </button>
+        <div class="header-actions">
+            <button id="theme-toggle" class="theme-btn-simple" aria-label="Alternar tema">
+                <span class="theme-icon">☀️</span>
+            </button>
+        </div>
     </header>
 
-    <main class="conteudo-principal">
-        <div class="erro-container">
-            <div class="erro-icone">⚠️</div>
-            <h1 class="erro-titulo">Ocorreu um erro</h1>
-            <p class="erro-mensagem">{{ mensagem }}</p>
-            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
-                <a href="{{ url_for('main.home') }}" class="botao botao-secundario">🏠 Voltar para Home</a>
-                <a href="{{ url_for('file.explorar') }}" class="botao botao-primario">📁 Voltar para Repositório</a>
+    <main class="content-centered">
+        <div class="error-container">
+            <div class="error-icon">⚠️</div>
+            <h1 class="error-title">Ocorreu um erro</h1>
+            <p class="error-message">{{ mensagem }}</p>
+            <div class="error-actions">
+                <a href="{{ url_for('file.explorar') }}" class="btn-primary">📁 Voltar para Explorador</a>
             </div>
         </div>
     </main>
 
-    <footer class="rodape">
+    <footer class="footer-simple">
         <p>Meu Drive Pessoal © 2024 - Seu repositório de arquivos</p>
     </footer>
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
@@ -8,7 +8,6 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
 
-    <!-- Script de tema ANTES do CSS -->
     <script>
         (function () {
             try {
@@ -24,57 +23,71 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
-<body>
-    <main class="conteudo-principal">
-        <div class="login-container">
-            <div class="login-card">
-                <div class="login-header">
-                    <h1 class="login-title">📁 Meu Drive Pessoal</h1>
-                    <p class="login-subtitle">Faça login para acessar seus arquivos</p>
+<body class="page-simple">
+    <header class="header-simple">
+        <nav class="header-nav">
+            <a href="{{ url_for('main.objetivos') }}">📋 Objetivos</a>
+        </nav>
+        <div class="header-actions">
+            <button id="theme-toggle" class="theme-btn-simple" aria-label="Alternar tema">
+                <span class="theme-icon">☀️</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="content-centered">
+        <div class="form-card">
+            <div class="form-card-header">
+                <h1 class="form-card-title">📁 Meu Drive Pessoal</h1>
+                <p class="form-card-subtitle">Faça login para acessar seus arquivos</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <form method="POST" class="login-form" id="login-form">
+                <div class="form-group">
+                    <label for="username" class="form-label">👤 Usuário</label>
+                    <input type="text" name="username" id="username" class="form-input" placeholder="Digite seu usuário"
+                        autofocus>
+                    <div class="form-error" id="username-error"></div>
                 </div>
 
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
-                {% endif %}
-                {% endwith %}
-
-                <form method="POST" class="login-form" id="login-form">
-                    <div class="form-group">
-                        <label for="username" class="form-label">👤 Usuário</label>
-                        <input type="text" name="username" id="username" class="form-input"
-                            placeholder="Digite seu usuário" autofocus>
-                        <div class="form-error" id="username-error"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="password" class="form-label">🔒 Senha</label>
-                        <input type="password" name="password" id="password" class="form-input"
-                            placeholder="Digite sua senha">
-                        <div class="form-error" id="password-error"></div>
-                    </div>
-
-                    <div class="form-group form-checkbox">
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="remember" id="remember">
-                            <span class="checkbox-custom"></span>
-                            <span class="checkbox-text">Lembrar de mim</span>
-                        </label>
-                    </div>
-
-                    <button type="submit" class="botao botao-primario login-btn">
-                        🚀 Entrar
-                    </button>
-                </form>
-
-                <div class="login-footer">
-                    <p>Meu Drive Pessoal © 2024</p>
+                <div class="form-group">
+                    <label for="password" class="form-label">🔒 Senha</label>
+                    <input type="password" name="password" id="password" class="form-input"
+                        placeholder="Digite sua senha">
+                    <div class="form-error" id="password-error"></div>
                 </div>
+
+                <div class="form-group form-checkbox">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="remember" id="remember">
+                        <span class="checkbox-custom"></span>
+                        <span class="checkbox-text">Lembrar de mim</span>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    🚀 Entrar
+                </button>
+            </form>
+
+            <div class="form-card-footer"
+                style="text-align: center; margin-top: 24px; font-size: 0.75rem; color: var(--text-secondary);">
+                <p>Meu Drive Pessoal © 2024</p>
             </div>
         </div>
     </main>
+
+    <footer class="footer-simple">
+        <p>Meu Drive Pessoal - Seu repositório de arquivos pessoal</p>
+    </footer>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
@@ -101,7 +114,6 @@
         function validateLoginForm() {
             let isValid = true;
 
-            // Validar usuário
             if (!usernameInput.value.trim()) {
                 showError(usernameInput, usernameError, 'Digite seu nome de usuário');
                 isValid = false;
@@ -109,12 +121,8 @@
                 clearError(usernameInput, usernameError);
             }
 
-            // Validar senha
             if (!passwordInput.value) {
                 showError(passwordInput, passwordError, 'Digite sua senha');
-                isValid = false;
-            } else if (passwordInput.value.length < 6) {
-                showError(passwordInput, passwordError, 'A senha deve ter pelo menos 6 caracteres');
                 isValid = false;
             } else {
                 clearError(passwordInput, passwordError);
@@ -129,7 +137,6 @@
             }
         });
 
-        // Limpar erro ao digitar
         usernameInput.addEventListener('input', function () {
             if (usernameInput.value.trim()) {
                 clearError(usernameInput, usernameError);
@@ -137,12 +144,8 @@
         });
 
         passwordInput.addEventListener('input', function () {
-            if (passwordInput.value && passwordInput.value.length >= 6) {
+            if (passwordInput.value) {
                 clearError(passwordInput, passwordError);
-            } else if (passwordInput.value && passwordInput.value.length < 6) {
-                showError(passwordInput, passwordError, 'A senha deve ter pelo menos 6 caracteres');
-            } else if (!passwordInput.value) {
-                showError(passwordInput, passwordError, 'Digite sua senha');
             }
         });
     </script>
