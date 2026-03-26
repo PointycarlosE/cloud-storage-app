@@ -1,5 +1,0 @@
-.env
-.firstrun
-venv/
-__pycache__/
-*.pyc

@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Ambiente virtual
+venv/
+.venv/
+env/
+.env/
+
+# Instância (arquivos sensíveis)
+instance/
+*.firstrun
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.log
+
+# Temporários
+*.tmp
+*.temp
+*.zip

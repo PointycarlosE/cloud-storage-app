@@ -1,13 +1,14 @@
-# routes/file_routes.py
+# app/routes/files.py
 import os
 import shutil
 import zipfile
 import tempfile
 from flask import render_template, abort, redirect, url_for, request, send_from_directory, send_file, Blueprint
 from werkzeug.utils import secure_filename
-from config import PASTA_BASE
-from utils.helpers import get_info_arquivo
-from auth.decorators import login_required_optional  # NOVA IMPORTAÇÃO
+
+from app.config import PASTA_BASE  # MUDAR: from config import PASTA_BASE
+from app.utils.helpers import get_info_arquivo  # MUDAR: from utils.helpers import get_info_arquivo
+from app.auth.decorators import login_required_optional  # MUDAR
 
 file_bp = Blueprint('file', __name__)
 

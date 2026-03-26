@@ -1,8 +1,8 @@
-# auth/decorators.py
+# app/auth/decorators.py
 from functools import wraps
 from flask import redirect, url_for, flash
 from flask_login import current_user
-from config import REQUIRE_LOGIN
+from app.config import REQUIRE_LOGIN  # MUDAR: from config import REQUIRE_LOGIN
 
 def login_required_optional(view_func):
     """

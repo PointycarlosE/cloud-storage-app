@@ -9,8 +9,8 @@ load_dotenv()
 
 # Depois importar config
 from config import PASTA_BASE, DEBUG, HOST, PORT, SECRET_KEY, IS_FIRST_RUN, CONFIGURADO
-from routes.main_routes import main_bp
-from routes.file_routes import file_bp
+from app.routes.main import main_bp
+from app.routes.files import file_bp
 from auth.routes import auth_bp
 from auth.models import User
 

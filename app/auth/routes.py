@@ -1,12 +1,13 @@
-# auth/routes.py
+# app/auth/routes.py
 import os
 import secrets
 from flask import render_template, redirect, url_for, request, flash, Blueprint, session
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash
 from datetime import datetime, timedelta
-from auth.models import User
-from config import ADMIN_USERNAME
+
+from app.auth.models import User  # MUDAR: from auth.models import User
+from app.config import ADMIN_USERNAME, IS_FIRST_RUN, CONFIGURADO, ROOT_DIR, PASTA_BASE  # MUDAR
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -110,8 +111,8 @@ def setup():
             print(f"📁 Caminho salvo no .env: {repo_path_salvo}")
             
             # Criar .env na raiz do projeto
-            env_path = os.path.join(ROOT_DIR, '.env')
-            firstrun_path = os.path.join(ROOT_DIR, '.firstrun')
+            env_path = os.path.join(ROOT_DIR, 'instance', '.env')
+            firstrun_path = os.path.join(ROOT_DIR, 'instance', '.firstrun')
             
             # Gerar SECRET_KEY
             secret_key = secrets.token_hex(32)

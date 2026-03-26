@@ -1,4 +1,4 @@
-# auth/models.py
+# app/auth/models.py
 from werkzeug.security import check_password_hash
 import os
 
@@ -24,7 +24,7 @@ class User:
     @staticmethod
     def get(username):
         """Busca usuário pelo nome"""
-        # Lê as variáveis de ambiente diretamente
+        # CORRIGIR: ler do ambiente diretamente (não precisa de import)
         admin_username = os.environ.get('ADMIN_USERNAME', 'admin')
         admin_password_hash = os.environ.get('ADMIN_PASSWORD_HASH', '')
         
