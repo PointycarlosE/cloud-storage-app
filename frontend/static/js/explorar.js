@@ -478,7 +478,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-        Object.entries(ordenacaoBotoes).forEach(([criterio, btn]) => {
+    Object.entries(ordenacaoBotoes).forEach(([criterio, btn]) => {
         if (btn) {
             btn.addEventListener('click', function () {
                 const clicouNoMesmo = ordenacaoAtual.criterio === criterio;
@@ -592,6 +592,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Para áudios
     document.querySelectorAll('[data-tipo="audio"]').forEach(card => {
         card.addEventListener('click', function (e) {
+            // Se clicou em checkbox ou botões, não abre modal
             if (e.target.closest('.item-checkbox') ||
                 e.target.closest('.item-checkbox-input') ||
                 e.target.closest('.botao-download') ||
@@ -602,9 +603,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Obter informações do áudio
             const caminho = this.dataset.caminho;
-            if (caminho) {
-                window.location.href = `/visualizar/${caminho}`;
+            const nome = this.querySelector('.item-nome')?.textContent || '';
+
+            // Construir URLs
+            const visualizarUrl = `/visualizar/${caminho}`;
+            const downloadUrl = `/download/${caminho}`;
+
+            // Encontrar o formulário de exclusão
+            const deleteForm = this.querySelector('.form-excluir');
+
+            // Abrir modal de áudio
+            if (typeof window.openAudioModal === 'function') {
+                window.openAudioModal(visualizarUrl, nome, downloadUrl, deleteForm);
             }
         });
     });
@@ -974,6 +989,122 @@ document.addEventListener('DOMContentLoaded', function () {
         // Usar a função global de upload definida no main.js
         if (files && files.length > 0 && typeof window.uploadFiles === 'function') {
             window.uploadFiles(files);
+        }
+    });
+});
+
+// ===== AUDIO PLAYER MODAL =====
+document.addEventListener('DOMContentLoaded', function () {
+    const audioModal = document.getElementById('audioModal');
+    const audioPlayer = document.getElementById('audioPlayer');
+    const audioSource = document.getElementById('audioSource');
+    const audioModalTitle = document.getElementById('audioModalTitle');
+    const audioModalInfo = document.getElementById('audioModalInfo');
+    const audioModalDownload = document.getElementById('audioModalDownload');
+    const audioModalDelete = document.getElementById('audioModalDelete');
+    const audioModalClose = document.getElementById('audioModalClose');
+    const audioDuration = document.getElementById('audioDuration');
+
+    let currentAudioUrl = '';
+    let currentAudioName = '';
+    let currentAudioDeleteForm = null;
+
+    // Função para abrir o modal de áudio
+    window.openAudioModal = function (audioUrl, audioName, downloadUrl, deleteForm) {
+        console.log('Abrindo modal de áudio:', audioName); // Debug
+        if (!audioModal) {
+            console.error('Modal de áudio não encontrado!');
+            return;
+        }
+
+        currentAudioUrl = audioUrl;
+        currentAudioName = audioName;
+        currentAudioDeleteForm = deleteForm;
+
+        // Configurar o player
+        audioSource.src = audioUrl;
+        audioPlayer.load();
+
+        // Configurar título e info
+        audioModalTitle.textContent = audioName;
+        audioModalInfo.textContent = 'Áudio';
+
+        // Configurar botão de download
+        audioModalDownload.href = downloadUrl;
+
+        // Remover evento antigo do botão de excluir e adicionar novo
+        const newDeleteBtn = audioModalDelete.cloneNode(true);
+        audioModalDelete.parentNode.replaceChild(newDeleteBtn, audioModalDelete);
+
+        newDeleteBtn.addEventListener('click', async function (e) {
+            e.preventDefault();
+
+            const confirmado = await ConfirmModal.open({
+                title: 'Excluir áudio',
+                message: `Tem certeza que deseja excluir o áudio "${audioName}"?`,
+                detail: 'Esta ação não pode ser desfeita.'
+            });
+
+            if (confirmado && currentAudioDeleteForm) {
+                showToast(`Excluindo ${audioName}...`, 'info', 2000);
+
+                const form = currentAudioDeleteForm.cloneNode(true);
+                document.body.appendChild(form);
+                form.submit();
+
+                setTimeout(() => {
+                    if (document.body.contains(form)) {
+                        document.body.removeChild(form);
+                    }
+                }, 1000);
+            }
+        });
+
+        // Mostrar duração quando o áudio estiver carregado
+        const updateDuration = function () {
+            const duration = audioPlayer.duration;
+            if (!isNaN(duration) && duration > 0) {
+                const minutes = Math.floor(duration / 60);
+                const seconds = Math.floor(duration % 60);
+                audioDuration.textContent = `Duração: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                audioPlayer.removeEventListener('loadedmetadata', updateDuration);
+            }
+        };
+        audioPlayer.addEventListener('loadedmetadata', updateDuration);
+
+        // Abrir modal
+        audioModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+
+        // Tentar reproduzir automaticamente (pode ser bloqueado pelo navegador)
+        audioPlayer.play().catch(e => console.log('Autoplay bloqueado:', e));
+    };
+
+    // Função para fechar o modal de áudio
+    function closeAudioModal() {
+        if (audioModal) {
+            audioModal.style.display = 'none';
+            audioPlayer.pause();
+            audioPlayer.currentTime = 0;
+            audioSource.src = '';
+            document.body.style.overflow = '';
+        }
+    }
+
+    // Eventos de fechamento
+    if (audioModalClose) audioModalClose.addEventListener('click', closeAudioModal);
+    if (audioModal) {
+        audioModal.addEventListener('click', function (e) {
+            if (e.target === audioModal) {
+                closeAudioModal();
+            }
+        });
+    }
+
+    // Fechar com ESC
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && audioModal && audioModal.style.display === 'flex') {
+            closeAudioModal();
         }
     });
 });
