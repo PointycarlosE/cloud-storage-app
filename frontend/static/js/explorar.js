@@ -546,11 +546,17 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 100);
 });
 
-// ===== NAVEGAÇÃO SIMPLES DOS CARDS =====
+// ===== NAVEGAÇÃO SIMPLES DOS CARDS (modificada) =====
 document.addEventListener('DOMContentLoaded', function () {
     // Para cada card de pasta
     document.querySelectorAll('[data-tipo="pasta"]').forEach(card => {
         card.addEventListener('click', function (e) {
+            // Se Ctrl estiver pressionado, não navega (deixa a seleção funcionar)
+            if (e.ctrlKey) {
+                e.preventDefault();
+                return;
+            }
+            
             // Se clicou em checkbox ou botões, não navega
             if (e.target.closest('.item-checkbox') ||
                 e.target.closest('.item-checkbox-input') ||
@@ -571,6 +577,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // Para imagens (lightbox)
     document.querySelectorAll('[data-tipo="imagem"]').forEach(card => {
         card.addEventListener('click', function (e) {
+            // Se Ctrl estiver pressionado, não abre lightbox
+            if (e.ctrlKey) {
+                e.preventDefault();
+                return;
+            }
+            
             if (e.target.closest('.item-checkbox') ||
                 e.target.closest('.item-checkbox-input') ||
                 e.target.closest('.botao-download') ||
@@ -580,7 +592,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            // Disparar o lightbox (já existe)
+            // Disparar o lightbox
             const imgCard = this.querySelector('.item-imagem');
             if (imgCard) {
                 const event = new MouseEvent('click', { bubbles: true });
@@ -592,7 +604,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // Para áudios
     document.querySelectorAll('[data-tipo="audio"]').forEach(card => {
         card.addEventListener('click', function (e) {
-            // Se clicou em checkbox ou botões, não abre modal
+            // Se Ctrl estiver pressionado, não abre modal
+            if (e.ctrlKey) {
+                e.preventDefault();
+                return;
+            }
+            
             if (e.target.closest('.item-checkbox') ||
                 e.target.closest('.item-checkbox-input') ||
                 e.target.closest('.botao-download') ||
@@ -606,18 +623,12 @@ document.addEventListener('DOMContentLoaded', function () {
             e.preventDefault();
             e.stopPropagation();
 
-            // Obter informações do áudio
             const caminho = this.dataset.caminho;
             const nome = this.querySelector('.item-nome')?.textContent || '';
-
-            // Construir URLs
             const visualizarUrl = `/visualizar/${caminho}`;
             const downloadUrl = `/download/${caminho}`;
-
-            // Encontrar o formulário de exclusão
             const deleteForm = this.querySelector('.form-excluir');
 
-            // Abrir modal de áudio
             if (typeof window.openAudioModal === 'function') {
                 window.openAudioModal(visualizarUrl, nome, downloadUrl, deleteForm);
             }
@@ -627,6 +638,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // Para arquivos comuns
     document.querySelectorAll('[data-tipo="arquivo"]').forEach(card => {
         card.addEventListener('click', function (e) {
+            // Se Ctrl estiver pressionado, não faz download
+            if (e.ctrlKey) {
+                e.preventDefault();
+                return;
+            }
+            
             if (e.target.closest('.item-checkbox') ||
                 e.target.closest('.item-checkbox-input') ||
                 e.target.closest('.botao-download') ||
@@ -652,6 +669,37 @@ document.addEventListener('DOMContentLoaded', function () {
     const selecaoClear = document.getElementById('selecao-clear');
     const selecaoDelete = document.getElementById('selecao-delete');
     const selecaoDownload = document.getElementById('selecao-download');
+
+    document.addEventListener('click', function (e) {
+        // Verifica se a tecla Ctrl está pressionada
+        if (e.ctrlKey) {
+            // Procura o card mais próximo do clique
+            const card = e.target.closest('.item-link');
+            if (card) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Encontra o checkbox dentro do card
+                const checkbox = card.querySelector('.item-checkbox-input');
+                if (checkbox) {
+                    // Inverte o estado do checkbox
+                    checkbox.checked = !checkbox.checked;
+
+                    // Dispara o evento change manualmente
+                    const changeEvent = new Event('change', { bubbles: true });
+                    checkbox.dispatchEvent(changeEvent);
+
+                    // Feedback visual: piscar o card
+                    card.classList.add('selecionado');
+                    setTimeout(() => {
+                        // Não remove a classe porque já foi adicionada pelo evento change
+                    }, 100);
+
+                    console.log(`Ctrl+Clique: ${checkbox.checked ? 'Selecionou' : 'Desselecionou'} ${card.dataset.nome}`);
+                }
+            }
+        }
+    });
 
     let itensSelecionados = new Set();
     let processandoObserver = false;
@@ -994,7 +1042,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // ===== AUDIO PLAYER MODAL =====
-(function() {
+(function () {
     // Aguardar o DOM carregar
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initAudioModal);
@@ -1024,17 +1072,17 @@ document.addEventListener('DOMContentLoaded', function () {
         // Função para fechar o modal e recarregar a página
         function closeAudioModalAndReload() {
             console.log('Fechando modal de áudio e recarregando página...');
-            
+
             // Parar o áudio
             if (audioPlayer) {
                 audioPlayer.pause();
                 audioPlayer.currentTime = 0;
             }
-            
+
             // Fechar o modal
             audioModal.style.display = 'none';
             document.body.style.overflow = '';
-            
+
             // Recarregar a página após um pequeno delay
             setTimeout(() => {
                 window.location.reload();
@@ -1053,9 +1101,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Função para abrir o modal
-        window.openAudioModal = function(audioUrl, audioName, downloadUrl, deleteForm) {
+        window.openAudioModal = function (audioUrl, audioName, downloadUrl, deleteForm) {
             console.log('Abrindo modal de áudio:', audioName);
-            
+
             currentAudioDeleteForm = deleteForm;
 
             // Resetar completamente o player
@@ -1063,11 +1111,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 audioPlayer.pause();
                 audioPlayer.currentTime = 0;
             }
-            
+
             // Configurar nova fonte
             if (audioSource) audioSource.src = audioUrl;
             if (audioPlayer) audioPlayer.load();
-            
+
             // Resetar duração
             if (audioDuration) audioDuration.textContent = '';
 
@@ -1079,7 +1127,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (audioModalDownload) audioModalDownload.href = downloadUrl;
 
             // Configurar botão de excluir
-            const handleDelete = async function(e) {
+            const handleDelete = async function (e) {
                 e.preventDefault();
                 const confirmado = await ConfirmModal.open({
                     title: 'Excluir áudio',
@@ -1089,14 +1137,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (confirmado && currentAudioDeleteForm) {
                     showToast(`Excluindo ${audioName}...`, 'info', 2000);
-                    
+
                     // Fechar o modal primeiro (sem recarregar)
                     closeAudioModalOnly();
-                    
+
                     const form = currentAudioDeleteForm.cloneNode(true);
                     document.body.appendChild(form);
                     form.submit();
-                    
+
                     // A exclusão vai recarregar a página automaticamente
                 }
             };
@@ -1110,7 +1158,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Atualizar duração quando carregar
             if (audioPlayer) {
-                const updateDuration = function() {
+                const updateDuration = function () {
                     const duration = audioPlayer.duration;
                     if (!isNaN(duration) && duration > 0) {
                         const minutes = Math.floor(duration / 60);
@@ -1138,9 +1186,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (audioModalClose) {
             audioModalClose.onclick = closeAudioModalAndReload;
         }
-        
+
         if (audioModal) {
-            audioModal.onclick = function(e) {
+            audioModal.onclick = function (e) {
                 if (e.target === audioModal) {
                     closeAudioModalAndReload();
                 }
@@ -1148,7 +1196,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Fechar com ESC também recarrega
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape' && audioModal.style.display === 'flex') {
                 closeAudioModalAndReload();
             }
@@ -1181,3 +1229,38 @@ async function atualizarLista() {
         console.error('Erro ao atualizar lista:', error);
     }
 }
+
+// ===== ATALHOS DE TECLADO =====
+document.addEventListener('keydown', function (e) {
+
+    // Alt + ← (seta esquerda) - Voltar para pasta anterior
+    if (e.altKey && e.key === 'ArrowLeft') {
+        e.preventDefault();
+        const backBtn = document.querySelector('.back-btn');
+        if (backBtn) {
+            console.log('Atalho Alt+← acionado - voltando');
+            backBtn.click();
+        } else {
+            // Se não tem botão voltar, tenta voltar no histórico do navegador
+            window.history.back();
+        }
+    }
+
+    // Alt + → (seta direita) - Avançar (se houver histórico)
+    if (e.altKey && e.key === 'ArrowRight') {
+        e.preventDefault();
+        console.log('Atalho Alt+→ acionado - avançando');
+        window.history.forward();
+    }
+
+    // Ctrl + Z para voltar (alternativa)
+    if (e.ctrlKey && e.key === 'z') {
+        e.preventDefault();
+        const backBtn = document.querySelector('.back-btn');
+        if (backBtn) {
+            backBtn.click();
+        } else {
+            window.history.back();
+        }
+    }
+});
