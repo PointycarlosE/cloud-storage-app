@@ -88,6 +88,7 @@ def aplicar_headers_seguranca(response):
     response.headers['X-XSS-Protection'] = '1; mode=block'
 
     # Em produção com HTTPS: força HTTPS por 1 ano, incluindo subdomínios
+    # No Wi-Fi local (development), o HSTS é desativado para não quebrar o acesso via IP
     if IS_PRODUCTION:
         response.headers['Strict-Transport-Security'] = (
             'max-age=31536000; includeSubDomains'
@@ -97,11 +98,8 @@ def aplicar_headers_seguranca(response):
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
 
     # Content Security Policy básica:
-    # - default: só recursos do próprio servidor
-    # - style/script: próprio servidor + inline (necessário para o JS atual)
-    # - img: qualquer origem (para preview de imagens)
-    # Ajuste conforme seu frontend evoluir
-    response.headers['Content-Security-Policy'] = (
+    # Em produção, a CSP é mais rígida. Em local, permitimos mais flexibilidade.
+    csp = (
         "default-src 'self'; "
         "script-src 'self' 'unsafe-inline'; "
         "style-src 'self' 'unsafe-inline'; "
@@ -111,6 +109,11 @@ def aplicar_headers_seguranca(response):
         "connect-src 'self'; "
         "frame-ancestors 'none';"
     )
+    # Se estiver em produção, podemos adicionar upgrade-insecure-requests
+    if IS_PRODUCTION:
+        csp += " upgrade-insecure-requests;"
+    
+    response.headers['Content-Security-Policy'] = csp
 
     # Remove header que revela que é Flask/Werkzeug
     response.headers.pop('Server', None)

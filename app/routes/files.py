@@ -319,6 +319,9 @@ def deletar_arquivo(caminho_arquivo):
     except PermissionError:
         return "Sem permissão", 403
 
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+        return {'sucesso': True, 'mensagem': 'Arquivo excluído com sucesso'}
+
     pasta_relativa = os.path.dirname(caminho_arquivo)
     return redirect(url_for('file.explorar', caminho=pasta_relativa))
 
@@ -341,6 +344,9 @@ def deletar_pasta(caminho_pasta):
         log_delete(current_user.username, caminho_pasta)
     except PermissionError:
         return "Sem permissão", 403
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+        return {'sucesso': True, 'mensagem': 'Pasta excluída com sucesso'}
 
     pasta_pai = os.path.dirname(caminho_pasta)
     return redirect(url_for('file.explorar', caminho=pasta_pai))

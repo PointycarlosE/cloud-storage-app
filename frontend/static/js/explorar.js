@@ -1,3 +1,6 @@
+// Variável global para rastrear se o drag começou dentro da página
+let isInternalDrag = false;
+
 // ===== LIGHTBOX PARA IMAGENS =====
 document.addEventListener('DOMContentLoaded', function () {
     const lightbox = document.getElementById('lightbox');
@@ -80,20 +83,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
     updateImageList();
 
-    document.querySelectorAll('.item-imagem').forEach((card) => {
-        const link = card.closest('.item-link');
-        if (link) {
-            link.addEventListener('click', function (e) {
-                if (e.target.closest('.botao-download') || e.target.closest('.botao-excluir') ||
-                    e.target.closest('form') || e.target.closest('button') ||
-                    e.target.closest('.item-checkbox') || e.target.closest('.item-checkbox-input')) return;
-                e.preventDefault();
-                e.stopPropagation();
-                updateImageList();
-                const currentCard = e.currentTarget.querySelector('.item-imagem');
-                const newIndex = Array.from(document.querySelectorAll('.item-imagem')).indexOf(currentCard);
-                if (newIndex !== -1) openLightbox(newIndex);
-            });
+    // ✅ DELEGAÇÃO DE EVENTO: Lightbox para imagens
+    document.addEventListener('click', function (e) {
+        const link = e.target.closest('.item-link');
+        if (link && link.querySelector('.item-imagem')) {
+            if (e.target.closest('.botao-download') || e.target.closest('.botao-excluir') ||
+                e.target.closest('form') || e.target.closest('button') ||
+                e.target.closest('.item-checkbox') || e.target.closest('.item-checkbox-input')) return;
+            
+            e.preventDefault();
+            e.stopPropagation();
+            updateImageList();
+            const currentCard = link.querySelector('.item-imagem');
+            const newIndex = Array.from(document.querySelectorAll('.item-imagem')).indexOf(currentCard);
+            if (newIndex !== -1) openLightbox(newIndex);
         }
     });
 
@@ -117,35 +120,35 @@ document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('pesquisa-input');
     const searchClear = document.getElementById('pesquisa-limpar');
     const searchCounter = document.getElementById('pesquisa-contador');
-    const items = document.querySelectorAll('.item-link');
     let searchTimeout;
 
-    function updateCounter(count) {
+    function updateCounter() {
+        const items = document.querySelectorAll('.item-link');
+        const visibleItems = Array.from(items).filter(item => item.style.display !== 'none').length;
         if (!searchCounter) return;
-        if (count === 0) searchCounter.textContent = 'Nenhum resultado';
-        else if (count === 1) searchCounter.textContent = '1 resultado';
-        else searchCounter.textContent = `${count} resultados`;
+        if (visibleItems === 0) searchCounter.textContent = 'Nenhum resultado';
+        else if (visibleItems === 1) searchCounter.textContent = '1 resultado';
+        else searchCounter.textContent = `${visibleItems} resultados`;
     }
 
     function performSearch() {
         const searchTerm = searchInput.value.toLowerCase().trim();
+        const items = document.querySelectorAll('.item-link');
         searchClear.classList.toggle('visible', searchTerm.length > 0);
 
         if (searchTerm === '') {
             items.forEach(item => { item.style.display = 'block'; item.classList.remove('destaque-pesquisa'); });
-            updateCounter(items.length);
+            updateCounter();
             if (typeof window.updateItemCount === 'function') window.updateItemCount();
             return;
         }
 
-        let matchCount = 0;
         items.forEach(item => {
             const nome = item.querySelector('.item-nome')?.textContent.toLowerCase() || '';
             const tipo = item.querySelector('.item-tipo')?.textContent.toLowerCase() || '';
             const matches = nome.includes(searchTerm) || tipo.includes(searchTerm);
             if (matches) {
                 item.style.display = 'block';
-                matchCount++;
                 if (nome === searchTerm || tipo === searchTerm) {
                     item.classList.add('destaque-pesquisa');
                     setTimeout(() => item.classList.remove('destaque-pesquisa'), 1000);
@@ -155,20 +158,22 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        updateCounter(matchCount);
+        updateCounter();
         if (typeof window.updateItemCount === 'function') window.updateItemCount();
     }
 
     if (searchInput) searchInput.addEventListener('input', function () { clearTimeout(searchTimeout); searchTimeout = setTimeout(performSearch, 150); });
     if (searchClear) searchClear.addEventListener('click', function () { searchInput.value = ''; searchInput.focus(); performSearch(); });
-    updateCounter(items.length);
+    
+    // Re-executa busca se a lista for atualizada via AJAX
+    document.addEventListener('listaAtualizada', performSearch);
+    updateCounter();
 });
 
 // ===== ALTERNAR VISUALIZAÇÃO (GRID/LISTA) =====
 document.addEventListener('DOMContentLoaded', function () {
     const viewGrid = document.getElementById('view-grid');
     const viewList = document.getElementById('view-list');
-    const listagemContainer = document.querySelector('.listagem-itens');
     const totalItensSpan = document.getElementById('view-total-itens');
 
     window.updateItemCount = function () {
@@ -183,6 +188,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (viewList) viewList.addEventListener('click', () => setViewMode('list'));
 
     function setViewMode(mode) {
+        const listagemContainer = document.querySelector('.listagem-itens');
         viewGrid?.classList.toggle('active', mode === 'grid');
         viewList?.classList.toggle('active', mode === 'list');
         if (listagemContainer) listagemContainer.classList.toggle('view-list', mode === 'list');
@@ -190,17 +196,12 @@ document.addEventListener('DOMContentLoaded', function () {
         setTimeout(window.updateItemCount, 50);
     }
 
-    const searchInput = document.getElementById('pesquisa-input');
-    if (searchInput) searchInput.addEventListener('input', () => setTimeout(window.updateItemCount, 200));
+    document.addEventListener('listaAtualizada', () => {
+        setViewMode(localStorage.getItem('viewMode') || 'grid');
+        window.updateItemCount();
+    });
 
     window.updateItemCount();
-
-    const observer = new MutationObserver(function (mutations) {
-        mutations.forEach(function (mutation) {
-            if (mutation.attributeName === 'style') window.updateItemCount();
-        });
-    });
-    document.querySelectorAll('.item-link').forEach(item => observer.observe(item, { attributes: true }));
 });
 
 // ===== ORDENAÇÃO =====
@@ -240,129 +241,78 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!d) return 0;
         if (d.includes('Hoje')) {
             const h = d.match(/(\d{2}):(\d{2})/);
-            if (h) { const hoje = new Date(); hoje.setHours(parseInt(h[1]), parseInt(h[2]), 0); return hoje.getTime(); }
-        } else if (d.includes('Ontem')) {
-            const h = d.match(/(\d{2}):(\d{2})/);
-            if (h) { const ontem = new Date(); ontem.setDate(ontem.getDate() - 1); ontem.setHours(parseInt(h[1]), parseInt(h[2]), 0); return ontem.getTime(); }
-        } else {
-            const p = d.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
-            if (p) return new Date(p[3], p[2] - 1, p[1], p[4], p[5]).getTime();
+            if (h) { const hoje = new Date(); hoje.setHours(parseInt(h[1]), parseInt(h[2]), 0, 0); return hoje.getTime(); }
         }
+        const p = d.split(/[\/\s:]/);
+        if (p.length >= 3) return new Date(p[2], p[1] - 1, p[0], p[3] || 0, p[4] || 0).getTime();
         return 0;
     }
 
     function ordenarItens() {
-        if (isOrdenando) return;
         const container = document.querySelector('.listagem-itens');
-        if (!container) return;
-        const items = Array.from(container.querySelectorAll('.item-link'));
-        if (items.length === 0) return;
+        if (!container || isOrdenando) return;
         isOrdenando = true;
-
+        const items = Array.from(container.querySelectorAll('.item-link'));
         items.sort((a, b) => {
-            let vA, vB;
-            switch (ordenacaoAtual.criterio) {
-                case 'nome':
-                    vA = (a.querySelector('.item-nome')?.textContent || '').toLowerCase();
-                    vB = (b.querySelector('.item-nome')?.textContent || '').toLowerCase();
-                    break;
-                case 'tipo':
-                    const peso = (i) => i.querySelector('.item-pasta') ? 1 : i.querySelector('.item-imagem') ? 2 : i.querySelector('.item-audio') ? 3 : 4;
-                    vA = peso(a); vB = peso(b);
-                    break;
-                case 'tamanho':
-                    vA = a.querySelector('.item-pasta') ? Infinity : parseTamanho(a.querySelector('.item-tamanho')?.textContent || '0 B');
-                    vB = b.querySelector('.item-pasta') ? Infinity : parseTamanho(b.querySelector('.item-tamanho')?.textContent || '0 B');
-                    break;
-                case 'data':
-                    vA = a.querySelector('.item-pasta') ? Infinity : parseData(a.querySelector('.item-data')?.textContent || '');
-                    vB = b.querySelector('.item-pasta') ? Infinity : parseData(b.querySelector('.item-data')?.textContent || '');
-                    break;
-                default: return 0;
-            }
-
-            const cmp = typeof vA === 'string' ? vA.localeCompare(vB) : vA - vB;
-            return ordenacaoAtual.ordem === 'asc' ? cmp : -cmp;
+            let valA, valB;
+            if (ordenacaoAtual.criterio === 'nome') { valA = a.dataset.nome.toLowerCase(); valB = b.dataset.nome.toLowerCase(); }
+            else if (ordenacaoAtual.criterio === 'tipo') { valA = a.dataset.tipo; valB = b.dataset.tipo; if (valA === valB) return a.dataset.nome.localeCompare(b.dataset.nome); }
+            else if (ordenacaoAtual.criterio === 'tamanho') { valA = parseTamanho(a.querySelector('.item-tamanho')?.textContent); valB = parseTamanho(b.querySelector('.item-tamanho')?.textContent); }
+            else if (ordenacaoAtual.criterio === 'data') { valA = parseData(a.querySelector('.item-data')?.textContent); valB = parseData(b.querySelector('.item-data')?.textContent); }
+            if (valA < valB) return ordenacaoAtual.ordem === 'asc' ? -1 : 1;
+            if (valA > valB) return ordenacaoAtual.ordem === 'asc' ? 1 : -1;
+            return 0;
         });
-
         items.forEach(item => container.appendChild(item));
-        setTimeout(() => { isOrdenando = false; }, 100);
-        if (typeof window.updateItemCount === 'function') window.updateItemCount();
+        isOrdenando = false;
     }
 
-    Object.entries(ordenacaoBotoes).forEach(([criterio, btn]) => {
-        if (btn) {
-            btn.addEventListener('click', function () {
-                if (ordenacaoAtual.criterio === criterio) ordenacaoAtual.ordem = ordenacaoAtual.ordem === 'asc' ? 'desc' : 'asc';
-                else { ordenacaoAtual.criterio = criterio; ordenacaoAtual.ordem = 'asc'; }
-                try { localStorage.setItem('ordenacao', JSON.stringify(ordenacaoAtual)); } catch (e) {}
-                atualizarBotoesOrdenacao();
-                ordenarItens();
-            });
-        }
+    Object.entries(ordenacaoBotoes).forEach(([crit, btn]) => {
+        if (btn) btn.addEventListener('click', () => {
+            if (ordenacaoAtual.criterio === crit) ordenacaoAtual.ordem = ordenacaoAtual.ordem === 'asc' ? 'desc' : 'asc';
+            else { ordenacaoAtual.criterio = crit; ordenacaoAtual.ordem = 'asc'; }
+            localStorage.setItem('ordenacao', JSON.stringify(ordenacaoAtual));
+            atualizarBotoesOrdenacao();
+            ordenarItens();
+        });
     });
 
-    const searchInput = document.getElementById('pesquisa-input');
-    if (searchInput) searchInput.addEventListener('input', () => setTimeout(ordenarItens, 250));
-
-    const container = document.querySelector('.listagem-itens');
-    if (container) {
-        let timeoutId = null;
-        const obs = new MutationObserver(function (mutations) {
-            if (isOrdenando) return;
-            const foiPesquisa = mutations.some(m => m.type === 'attributes' && m.attributeName === 'style');
-            if (foiPesquisa) {
-                if (timeoutId) clearTimeout(timeoutId);
-                timeoutId = setTimeout(() => { ordenarItens(); timeoutId = null; }, 150);
-            }
-        });
-        obs.observe(container, { childList: true, attributes: true, subtree: true, attributeFilter: ['style'] });
-    }
+    document.addEventListener('listaAtualizada', () => {
+        atualizarBotoesOrdenacao();
+        ordenarItens();
+    });
 
     setTimeout(() => { atualizarBotoesOrdenacao(); ordenarItens(); }, 100);
 });
 
-// ===== NAVEGAÇÃO DOS CARDS =====
+// ===== NAVEGAÇÃO DOS CARDS (DELEGAÇÃO) =====
 document.addEventListener('DOMContentLoaded', function () {
     const ignorarClique = (e) =>
         e.target.closest('.item-checkbox') || e.target.closest('.item-checkbox-input') ||
         e.target.closest('.botao-download') || e.target.closest('.botao-excluir') ||
         e.target.closest('form') || e.target.closest('button');
 
-    document.querySelectorAll('[data-tipo="pasta"]').forEach(card => {
-        card.addEventListener('click', function (e) {
-            if (e.ctrlKey || ignorarClique(e)) return;
-            const caminho = this.dataset.caminho;
+    document.addEventListener('click', function (e) {
+        const card = e.target.closest('.item-link');
+        if (!card || e.ctrlKey || ignorarClique(e)) return;
+
+        const tipo = card.dataset.tipo;
+        const caminho = card.dataset.caminho;
+
+        if (tipo === 'pasta') {
             if (caminho) window.location.href = `/explorar/${caminho}`;
-        });
-    });
-
-    document.querySelectorAll('[data-tipo="imagem"]').forEach(card => {
-        card.addEventListener('click', function (e) {
-            if (e.ctrlKey || ignorarClique(e)) return;
-            const imgCard = this.querySelector('.item-imagem');
-            if (imgCard) imgCard.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-        });
-    });
-
-    document.querySelectorAll('[data-tipo="audio"]').forEach(card => {
-        card.addEventListener('click', function (e) {
-            if (e.ctrlKey || ignorarClique(e) || e.target.closest('audio')) return;
+        } else if (tipo === 'imagem') {
+            // O clique na imagem já é tratado pela delegação do Lightbox acima
+        } else if (tipo === 'audio') {
+            if (e.target.closest('audio')) return;
             e.preventDefault(); e.stopPropagation();
-            const caminho = this.dataset.caminho;
-            const nome = this.querySelector('.item-nome')?.textContent || '';
+            const nome = card.querySelector('.item-nome')?.textContent || '';
             if (typeof window.openAudioModal === 'function') {
-                window.openAudioModal(`/visualizar/${caminho}`, nome, `/download/${caminho}`, this.querySelector('.form-excluir'));
+                window.openAudioModal(`/visualizar/${caminho}`, nome, `/download/${caminho}`, card.querySelector('.form-excluir'));
             }
-        });
-    });
-
-    document.querySelectorAll('[data-tipo="arquivo"]').forEach(card => {
-        card.addEventListener('click', function (e) {
-            if (e.ctrlKey || ignorarClique(e)) return;
-            const caminho = this.dataset.caminho;
+        } else if (tipo === 'arquivo') {
             if (caminho) window.location.href = `/download/${caminho}`;
-        });
+        }
     });
 });
 
@@ -376,9 +326,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const selecaoDownload = document.getElementById('selecao-download');
 
     let itensSelecionados = new Set();
-    let processandoObserver = false;
 
-    // Ctrl+Clique para seleção individual
+    // Ctrl+Clique para seleção individual (Delegação)
     document.addEventListener('click', function (e) {
         if (e.ctrlKey) {
             const card = e.target.closest('.item-link');
@@ -402,22 +351,17 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    function handleCheckboxChange(e) {
-        e.stopPropagation();
-        const checkbox = e.target;
-        const caminho = checkbox.dataset.caminho;
-        const item = checkbox.closest('.item-link');
-        if (checkbox.checked) { itensSelecionados.add(caminho); item?.classList.add('selecionado'); }
-        else { itensSelecionados.delete(caminho); item?.classList.remove('selecionado'); }
-        atualizarSelecao();
-    }
-
-    function configurarCheckbox(checkbox) {
-        checkbox.removeEventListener('change', handleCheckboxChange);
-        checkbox.addEventListener('change', handleCheckboxChange);
-    }
-
-    document.querySelectorAll('.item-checkbox-input').forEach(configurarCheckbox);
+    // ✅ DELEGAÇÃO DE EVENTO: Checkboxes
+    document.addEventListener('change', function (e) {
+        if (e.target.classList.contains('item-checkbox-input')) {
+            const checkbox = e.target;
+            const caminho = checkbox.dataset.caminho;
+            const item = checkbox.closest('.item-link');
+            if (checkbox.checked) { itensSelecionados.add(caminho); item?.classList.add('selecionado'); }
+            else { itensSelecionados.delete(caminho); item?.classList.remove('selecionado'); }
+            atualizarSelecao();
+        }
+    });
 
     selecaoSelectAll?.addEventListener('click', function () {
         const checkboxes = document.querySelectorAll('.item-checkbox-input');
@@ -434,6 +378,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     selecaoClear?.addEventListener('click', function () {
         document.querySelectorAll('.item-checkbox-input').forEach(cb => { cb.checked = false; cb.closest('.item-link')?.classList.remove('selecionado'); });
+        itensSelecionados.clear();
+        atualizarSelecao();
+    });
+
+    // Limpar seleção ao atualizar lista (opcional, mas evita bugs de itens que sumiram)
+    document.addEventListener('listaAtualizada', () => {
         itensSelecionados.clear();
         atualizarSelecao();
     });
@@ -462,7 +412,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    // ✅ CSRF: obrigatório para o flask-wtf aceitar
                     'X-CSRFToken': getCsrfToken()
                 },
                 body: JSON.stringify({ caminhos: Array.from(itensSelecionados) })
@@ -476,7 +425,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else {
                     showToast(`✅ ${resultado.excluidos} itens excluídos com sucesso!`, 'success');
                 }
-                setTimeout(() => window.location.reload(), 1500);
+                // Em vez de reload, atualiza a lista via AJAX
+                if (typeof atualizarLista === 'function') atualizarLista();
             } else {
                 showToast(`Erro: ${resultado.erro}`, 'error');
             }
@@ -497,7 +447,6 @@ document.addEventListener('DOMContentLoaded', function () {
         form.action = '/download_zip';
         form.style.display = 'none';
 
-        // ✅ CSRF: incluir token no form gerado dinamicamente
         const csrfInput = document.createElement('input');
         csrfInput.type = 'hidden';
         csrfInput.name = 'csrf_token';
@@ -528,26 +477,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     });
-
-    // Observer para novos checkboxes (após atualizarLista)
-    const container = document.querySelector('.listagem-itens');
-    if (container) {
-        const obs = new MutationObserver(function (mutations) {
-            if (processandoObserver) return;
-            processandoObserver = true;
-            let temNovos = mutations.some(m => m.type === 'childList' && Array.from(m.addedNodes).some(n =>
-                n.nodeType === 1 && (n.classList?.contains('item-checkbox-input') || n.querySelectorAll?.('.item-checkbox-input').length > 0)
-            ));
-            if (temNovos) {
-                document.querySelectorAll('.item-checkbox-input:not([data-event-ok])').forEach(cb => {
-                    configurarCheckbox(cb);
-                    cb.setAttribute('data-event-ok', 'true');
-                });
-            }
-            setTimeout(() => { processandoObserver = false; }, 100);
-        });
-        obs.observe(container, { childList: true, subtree: true });
-    }
 });
 
 // ===== ÍCONES DINÂMICOS (FALLBACK) =====
@@ -564,10 +493,16 @@ document.addEventListener('DOMContentLoaded', function () {
         'exe': '⚙️', 'msi': '⚙️', 'bat': '📜', 'sh': '📜',
         'sql': '🗄️', 'db': '🗄️', 'sqlite': '🗄️'
     };
-    document.querySelectorAll('.file-icon').forEach(icon => {
-        const ext = icon.dataset.extensao;
-        if (ext && iconMap[ext] && icon.textContent === '📄') icon.textContent = iconMap[ext];
-    });
+    
+    function updateIcons() {
+        document.querySelectorAll('.file-icon').forEach(icon => {
+            const ext = icon.dataset.extensao;
+            if (ext && iconMap[ext] && (icon.textContent === '📄' || icon.textContent === '')) icon.textContent = iconMap[ext];
+        });
+    }
+    
+    updateIcons();
+    document.addEventListener('listaAtualizada', updateIcons);
 });
 
 // ===== SALVAR POSIÇÃO DE ROLAGEM =====
@@ -579,22 +514,74 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 })();
 
-// ===== DRAG & DROP =====
+// ===== DRAG & DROP (BLINDADO) =====
 document.addEventListener('DOMContentLoaded', function () {
     const overlay = document.getElementById('global-drop-overlay');
     let dragCounter = 0;
 
-    document.addEventListener('dragenter', (e) => {
-        if (e.dataTransfer.types?.includes('Files')) { dragCounter++; overlay?.classList.add('active'); }
+    // ✅ DETECÇÃO DE DRAG INTERNO: Bloqueia o overlay se o drag começou dentro da página
+    document.addEventListener('dragstart', () => {
+        isInternalDrag = true;
     });
-    document.addEventListener('dragleave', () => { dragCounter--; if (dragCounter <= 0 && overlay) overlay.classList.remove('active'); });
-    document.addEventListener('dragover', (e) => e.preventDefault());
+
+    document.addEventListener('dragend', () => {
+        isInternalDrag = false;
+        dragCounter = 0;
+        overlay?.classList.remove('active');
+    });
+
+    document.addEventListener('dragenter', (e) => {
+        // Se o drag começou dentro da página, ignora
+        if (isInternalDrag) return;
+
+        // Verifica se o que está sendo arrastado são arquivos externos
+        if (e.dataTransfer.types?.includes('Files')) {
+            dragCounter++;
+            overlay?.classList.add('active');
+        }
+    });
+
+    document.addEventListener('dragleave', (e) => {
+        if (isInternalDrag) return;
+
+        // Apenas decrementa se estiver saindo de um elemento real (evita bugs com elementos filhos)
+        if (e.relatedTarget === null || !document.body.contains(e.relatedTarget)) {
+            dragCounter = 0;
+        } else {
+            dragCounter--;
+        }
+        if (dragCounter <= 0 && overlay) overlay.classList.remove('active');
+    });
+
+    document.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (isInternalDrag) {
+            e.dataTransfer.dropEffect = 'none';
+            return;
+        }
+        // Garante que o cursor mostre que é um upload de arquivos
+        if (e.dataTransfer.types?.includes('Files')) {
+            e.dataTransfer.dropEffect = 'copy';
+        }
+    });
+
     document.addEventListener('drop', (e) => {
         e.preventDefault();
         overlay?.classList.remove('active');
         dragCounter = 0;
+
+        if (isInternalDrag) {
+            isInternalDrag = false;
+            return;
+        }
+
+        // Importante: verifica se existem arquivos reais no drop
         const files = e.dataTransfer.files;
-        if (files?.length > 0 && typeof window.uploadFiles === 'function') window.uploadFiles(files);
+        if (files && files.length > 0) {
+            if (typeof window.uploadFiles === 'function') {
+                window.uploadFiles(files);
+            }
+        }
     });
 });
 
@@ -620,7 +607,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (audioPlayer) audioPlayer.currentTime = 0;
             audioModal.style.display = 'none';
             document.body.style.overflow = '';
-            setTimeout(() => window.location.reload(), 100);
+            // Em vez de reload, apenas atualiza a lista se necessário
+            if (typeof atualizarLista === 'function') atualizarLista();
         }
 
         function closeAudioModalOnly() {
@@ -705,8 +693,13 @@ async function atualizarLista() {
         if (response.ok) {
             container.innerHTML = await response.text();
             showToast('📂 Lista atualizada!', 'info', 2000);
+
+            // Dispara evento customizado para que outros scripts saibam que a lista mudou
+            document.dispatchEvent(new CustomEvent('listaAtualizada'));
         }
-    } catch (error) {}
+    } catch (error) {
+        console.error('Erro ao atualizar lista:', error);
+    }
 }
 
 // ===== ATALHOS DE NAVEGAÇÃO =====

@@ -39,9 +39,13 @@ if not SECRET_KEY:
 
 # Cookies de sessão
 # Em produção (HTTPS obrigatório): Secure=True impede envio em HTTP
+# Em desenvolvimento (Local): Secure=False permite login via HTTP (Wi-Fi local)
 SESSION_COOKIE_SECURE = IS_PRODUCTION
 SESSION_COOKIE_HTTPONLY = True          # Bloqueia acesso via JavaScript
 SESSION_COOKIE_SAMESITE = 'Lax'        # Proteção CSRF básica em nível de cookie
+
+# Forçar HTTPS apenas se estiver em produção (evita erro de login no Wi-Fi local)
+PREFERRED_URL_SCHEME = 'https' if IS_PRODUCTION else 'http'
 
 # Tempo de sessão padrão (sem "lembrar-me"): 8 horas
 PERMANENT_SESSION_LIFETIME = 8 * 60 * 60  # segundos

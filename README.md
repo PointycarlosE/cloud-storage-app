@@ -11,307 +11,133 @@
 
 ## 📌 Sobre o Projeto
 
-O **Cloud Storage App** é uma aplicação web desenvolvida com **Python (Flask)** que transforma seu computador em um servidor de arquivos acessível via navegador.
-
-O projeto evoluiu para oferecer uma experiência cada vez mais próxima de serviços como o Google Drive, com recursos modernos como **drag & drop, upload com progresso em tempo real, player de áudio integrado e atualização dinâmica da interface**, mantendo o principal objetivo:
+O **Cloud Storage App** é uma aplicação web desenvolvida com **Python (Flask)** que transforma seu computador em um servidor de arquivos acessível via navegador. O projeto evoluiu para oferecer uma experiência cada vez mais próxima de serviços como o Google Drive, com recursos modernos como **drag & drop, upload com progresso em tempo real, player de áudio integrado e atualização dinâmica da interface**, mantendo o principal objetivo:
 
 > 🔒 Garantir ao usuário **controle total sobre seus dados**, sem dependência de serviços terceiros.
 
 ---
 
-## ✨ Funcionalidades
+## ✨ Funcionalidades Implementadas (+25)
 
 ### 🔐 Segurança & Autenticação
-
-* Sistema de login com proteção contra força bruta
-* Senhas armazenadas com hash seguro (scrypt/pbkdf2)
-* Sessões protegidas (HttpOnly + SameSite)
-* Proteção de rotas e controle de acesso
-* Validação contra ataques de path traversal
-
----
+*   **Sistema de Login:** Proteção contra força bruta com rate limiting agressivo.
+*   **Senhas Seguras:** Armazenamento com hash (scrypt/pbkdf2).
+*   **Sessões Blindadas:** Cookies `HttpOnly`, `SameSite=Lax` e `Secure` (em produção).
+*   **Headers de Segurança:** CSP (Content Security Policy), HSTS, X-Frame-Options e X-Content-Type-Options.
+*   **Proteção de Rotas:** Validação contra ataques de *path traversal* e CSRF em todas as operações de escrita.
 
 ### 📂 Gerenciamento de Arquivos
+*   **Navegação Completa:** Diretórios com breadcrumb interativo.
+*   **Upload Avançado:** Múltiplos arquivos via botão ou **Drag & Drop global**.
+*   **Painel de Uploads:** Progresso individual em tempo real (estilo Google Drive).
+*   **Downloads:** Individual ou em lote compactado em **ZIP**.
+*   **Pastas:** Criação e exclusão de diretórios.
+*   **Seleção Múltipla:** Atalhos de teclado (`Ctrl+A`, `Delete`, `Ctrl+Clique`).
 
-* Navegação completa por diretórios
-* Upload de múltiplos arquivos
-* Upload via **drag & drop em toda a interface**
-* Painel de uploads com progresso individual (estilo Google Drive)
-* Download individual e em ZIP
-* Criação e exclusão de pastas
-* Seleção múltipla com atalhos (`Ctrl + A`, `Delete`)
-
----
-
-### ⚡ Experiência Dinâmica (UX)
-
-* Atualização de arquivos **sem reload (AJAX)**
-* Interface fluida (mantém contexto e scroll)
-* Feedback em tempo real durante uploads
-* Estados de upload:
-
-  * Enviando
-  * Concluído
-  * Erro
+### ⚡ Experiência do Usuário (UX)
+*   **Interface AJAX:** Atualização da lista de arquivos e exclusão individual **sem recarregar a página**.
+*   **Tema Híbrido:** Claro/Escuro persistente no `localStorage`.
+*   **Visualização:** Lightbox para imagens, player de áudio integrado e visualizador de PDF.
+*   **Organização:** Pesquisa em tempo real e ordenação por nome, tipo, tamanho ou data.
+*   **Responsividade:** Interface adaptada para Desktop, Tablet e Mobile.
+*   **Feedback Visual:** Toast notifications e modais de confirmação personalizados.
 
 ---
 
-### 🔍 Organização & Busca
+## 🚀 Como Instalar e Executar
 
-* Pesquisa em tempo real
-* Ordenação por nome, tipo, tamanho e data
-* Exibição de metadados formatados
-* Breadcrumb interativo
-
----
-
-### 🎨 Interface
-
-* Novo layout moderno e mais elegante
-* Interface refinada com melhor organização visual
-* Tema claro/escuro persistente
-* Visualização em lista ou grade
-* Design responsivo (desktop, tablet e mobile)
-* Toast notifications modernas
-* Modais personalizados
-* Scrollbars customizadas (tema claro/escuro)
-* Painel de uploads estilizado e animado
----
-
-### 🖼️ Visualização de Arquivos
-
-* Lightbox para imagens
-* 🎵 Player de áudio integrado (reprodução direta no navegador)
-* Visualização de PDF
-* Miniaturas automáticas
----
-
-### 🎵 Reprodução de Áudio
-
-* Player de áudio integrado na interface
-* Reprodução direta de arquivos (.mp3, .wav, etc.)
-* Controles nativos (play, pause, progresso)
-* Experiência fluida sem necessidade de download
-
----
-
-## 🚀 Como Executar
-
-### 1. Clone o repositório
-
+### 1. Preparação
 ```bash
 git clone https://github.com/PointycarlosE/cloud-storage-app.git
 cd cloud-storage-app
 ```
 
----
-
-### 2. Crie e ative o ambiente virtual
-
+### 2. Ambiente Virtual
 ```bash
 python -m venv venv
+# Ativar (Windows): venv\Scripts\activate
+# Ativar (Linux/Mac/Termux): source venv/bin/activate
 ```
 
-**Windows**
-
-```bash
-venv\Scripts\activate
-```
-
-**Linux/Mac**
-
-```bash
-source venv/bin/activate
-```
-
----
-
-### 3. Instale as dependências
-
+### 3. Instalação
 ```bash
 pip install -r requirements.txt
 ```
 
 ---
 
-### 4. Execute o projeto
+## ⚙️ Configuração e Modos de Uso
 
-```bash
-python run.py
-```
+O sistema utiliza um arquivo `.env` dentro da pasta `instance/` para se configurar automaticamente.
 
-Acesse:
+### 🏠 Modo Local (Desenvolvimento)
+Ideal para usar em casa via Wi-Fi ou para testes.
+1.  No arquivo `instance/.env`, defina `FLASK_ENV=development`.
+2.  Execute: `python run.py`
+3.  Acesse: `http://localhost:5000` ou `http://SEU_IP_LOCAL:5000`
 
-```
-http://localhost:5000
-```
+### 🌐 Modo Internet (Produção)
+Ideal para acessar de qualquer lugar via Cloudflare Tunnel ou VPS.
+1.  No arquivo `instance/.env`, defina `FLASK_ENV=production`.
+2.  **Use o Gunicorn** (já pré-configurado no projeto):
+    ```bash
+    gunicorn -c gunicorn_config.py app:app
+    ```
+3.  O sistema ativará automaticamente a blindagem máxima (HTTPS obrigatório, HSTS rígido, etc).
 
 ---
 
-## ⚙️ Primeira Execução
-
-* Crie sua conta ao acessar o sistema
-* Defina a pasta base dos arquivos
-* Reinicie o servidor (temporariamente necessário)
-
----
-
-## 🌐 Acesso na Rede Local
-
-1. Descubra seu IP:
-
-```bash
-ipconfig      # Windows  
-ifconfig      # Linux/Mac  
-```
-
-2. Acesse:
-
-```
-http://SEU_IP:5000
-```
-
-> ⚠️ Verifique se o firewall permite conexões na porta.
+## 📱 Rodando no Celular (Termux)
+Este projeto é otimizado para rodar em dispositivos Android antigos!
+1.  Instale o Termux e execute: `pkg install python cloudflared`
+2.  Siga os passos de instalação acima.
+3.  Use o **Cloudflare Tunnel** para criar um link seguro (HTTPS) sem abrir portas no roteador.
 
 ---
 
 ## 🛠️ Estrutura do Projeto
-
 ```
 cloud-storage-app/
-├── app/            # Backend (Flask)
-├── frontend/       # Interface (HTML, CSS, JS)
-├── instance/       # Configurações locais (.env)
-├── run.py          # Inicialização da aplicação
-├── requirements.txt
+├── app/                # Backend (Flask)
+├── frontend/           # Interface (HTML, CSS, JS)
+├── instance/           # Configurações locais (.env) e Logs
+├── gunicorn_config.py  # Configuração para servidor de produção
+├── run.py              # Inicialização para modo local
+└── requirements.txt    # Dependências
 ```
 
 ---
 
-## 🔧 Configuração
+## 🌍 Visão de Futuro & Roadmap
 
-### Variáveis de ambiente (.env)
+O objetivo final é oferecer uma alternativa gratuita, segura e autônoma a serviços como Google Drive e Dropbox.
 
-```env
-PASTA_BASE=/caminho/para/arquivos
-SECRET_KEY=sua_chave_secreta
-```
+### 🔥 Concluído Recentemente
+*   [x] Exclusão individual sem reload (AJAX)
+*   [x] Blindagem contra Drag & Drop interno acidental
+*   [x] Correção de carregamento de miniaturas pós-AJAX
+*   [x] Modo Híbrido (Local/Produção) e Gunicorn Config
 
----
-
-### Alterar porta
-
-```python
-PORT = 8080  # padrão: 5000
-```
-
----
-
-## 📦 Tecnologias Utilizadas
-
-* **Backend:** Python + Flask
-* **Frontend:** HTML, CSS, JavaScript
-* **Segurança:** Flask-Login, Werkzeug
-* **Configuração:** python-dotenv
-
----
-
-## 🌍 Visão de Futuro
-
-O projeto está sendo desenvolvido para evoluir de um sistema local para uma solução completa acessível pela internet, mantendo como pilares:
-
-* 🔒 Segurança
-* ⚙️ Simplicidade
-* 🧠 Autonomia do usuário
-
-O objetivo é permitir que qualquer pessoa possa hospedar seu próprio sistema de armazenamento e acessá-lo de qualquer lugar com facilidade.
-
----
-
-### 🔐 Segurança como Prioridade
-
-A disponibilização externa exige um alto nível de proteção. Por isso, a segurança é tratada como prioridade central no desenvolvimento.
-
-Entre os pontos em evolução:
-
-* Implementação de HTTPS (SSL/TLS)
-* Proteção contra CSRF e XSS
-* Rate limiting global
-* Autenticação em dois fatores (2FA)
-* Logs e auditoria de acessos
-* Controle de permissões (multiusuário)
-
-> ⚠️ Atualmente, o uso é recomendado em rede local até que os requisitos de segurança para acesso externo estejam totalmente implementados.
-
----
-
-### 🚧 Desafios Atuais
-
-* Deploy em ambiente externo (VPS / cloud)
-* Configuração de domínio e acesso remoto
-* Suporte a múltiplos usuários simultâneos
-* Automatização da instalação
-
----
-
-### 🎯 Objetivo Final
-
-Criar uma plataforma que seja:
-
-* 🔒 Segura por padrão
-* ⚙️ Simples de instalar
-* 🌐 Acessível de qualquer lugar
-* 🧠 Independente de serviços terceiros
-
----
-
-## 🚧 Roadmap
-
-### 🔥 Concluído recentemente
-
-* [x] Upload com barra de progresso
-* [x] Drag & Drop global
-* [x] Painel de uploads
-* [x] Atualização dinâmica sem reload
-* [x] Player de áudio integrado
-* [x] Novo layout moderno
-
----
-
-### 🚀 Próximos passos
-
-* [ ] Compartilhamento por link
-* [ ] Sistema multiusuário
-* [ ] Logs de atividade
-* [ ] Upload de pastas
-* [ ] Exclusão dinâmica sem reload
-* [ ] Deploy online seguro
+### 🚀 Próximos Passos
+*   [ ] **Compartilhamento por link:** Gerar links temporários para terceiros.
+*   [ ] **Sistema Multiusuário:** Espaços individuais e permissões.
+*   [ ] **Logs de Atividade:** Interface de auditoria para o administrador.
+*   [ ] **Visualização de Vídeos:** Player integrado em modal.
+*   [ ] **2FA:** Autenticação de dois fatores para segurança máxima.
 
 ---
 
 ## 🤝 Contribuição
-
-1. Fork o projeto
-2. Crie uma branch (`feature/minha-feature`)
-3. Commit (`git commit -m 'feat: nova feature'`)
-4. Push (`git push origin feature/minha-feature`)
-5. Abra um Pull Request
+1. Fork o projeto | 2. Crie uma branch | 3. Commit mudanças | 4. Abra um Pull Request
 
 ---
 
 ## 📝 Licença
-
 Este projeto está sob a licença MIT.
 
 ---
 
 ## 👨‍💻 Autor
+**Carlos** - [GitHub](https://github.com/PointycarlosE)
 
-**Carlos**
-GitHub: https://github.com/PointycarlosE
-
----
-
-## ⭐ Apoio
-
-Se este projeto te ajudou ou te inspirou, considere deixar uma estrela ⭐ no repositório!
+Se este projeto te ajudou, considere deixar uma estrela ⭐ no repositório!

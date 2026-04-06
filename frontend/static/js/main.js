@@ -88,6 +88,36 @@ const ConfirmModal = {
 
 document.addEventListener('DOMContentLoaded', () => ConfirmModal.init());
 
+// Função genérica para exclusão via AJAX
+async function executarExclusaoAjax(url, nomeItem, tipo = 'arquivo') {
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCsrfToken(),
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        if (response.ok) {
+            showToast(`✅ ${tipo === 'pasta' ? '📁' : '📄'} "${nomeItem}" excluído com sucesso!`, 'success');
+            // Atualiza a lista sem recarregar a página
+            if (typeof atualizarLista === 'function') {
+                atualizarLista();
+            } else {
+                // Fallback caso a função não esteja disponível
+                window.location.reload();
+            }
+        } else {
+            const erro = await response.text();
+            showToast(`❌ Erro ao excluir: ${erro}`, 'error');
+        }
+    } catch (error) {
+        console.error('Erro na requisição de exclusão:', error);
+        showToast('❌ Erro de conexão ao excluir item', 'error');
+    }
+}
+
 // Confirmação de exclusão de arquivo (chamada pelo HTML inline)
 window.confirmarExclusao = async (nomeArquivo, form) => {
     const result = await ConfirmModal.open({
@@ -96,9 +126,15 @@ window.confirmarExclusao = async (nomeArquivo, form) => {
         detail: 'Esta ação não pode ser desfeita.'
     });
     if (result) {
-        sessionStorage.setItem('toastMessage', `✅ "${nomeArquivo}" excluído com sucesso!`);
-        sessionStorage.setItem('toastType', 'success');
-        form.submit();
+        // Tenta excluir via AJAX primeiro
+        if (form && form.action) {
+            executarExclusaoAjax(form.action, nomeArquivo, 'arquivo');
+        } else {
+            // Fallback para o comportamento antigo se necessário
+            sessionStorage.setItem('toastMessage', `✅ "${nomeArquivo}" excluído com sucesso!`);
+            sessionStorage.setItem('toastType', 'success');
+            form.submit();
+        }
     }
 };
 
@@ -110,9 +146,15 @@ window.confirmarExclusaoPasta = async (nomePasta, form) => {
         detail: 'ATENÇÃO! TODOS os arquivos dentro dela serão apagados permanentemente.'
     });
     if (result) {
-        sessionStorage.setItem('toastMessage', `📁 "${nomePasta}" excluída com sucesso!`);
-        sessionStorage.setItem('toastType', 'success');
-        form.submit();
+        // Tenta excluir via AJAX primeiro
+        if (form && form.action) {
+            executarExclusaoAjax(form.action, nomePasta, 'pasta');
+        } else {
+            // Fallback para o comportamento antigo se necessário
+            sessionStorage.setItem('toastMessage', `📁 "${nomePasta}" excluída com sucesso!`);
+            sessionStorage.setItem('toastType', 'success');
+            form.submit();
+        }
     }
 };
 
