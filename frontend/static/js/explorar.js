@@ -243,20 +243,21 @@ document.addEventListener('DOMContentLoaded', function () {
             const h = d.match(/(\d{2}):(\d{2})/);
             if (h) { const hoje = new Date(); hoje.setHours(parseInt(h[1]), parseInt(h[2]), 0, 0); return hoje.getTime(); }
         }
-        const p = d.split(/[\/\s:]/);
-        if (p.length >= 3) return new Date(p[2], p[1] - 1, p[0], p[3] || 0, p[4] || 0).getTime();
+        const p = d.split('/');
+        if (p.length === 3) return new Date(p[2], p[1] - 1, p[0]).getTime();
         return 0;
     }
 
     function ordenarItens() {
-        const container = document.querySelector('.listagem-itens');
-        if (!container || isOrdenando) return;
+        if (isOrdenando) return;
         isOrdenando = true;
+        const container = document.querySelector('.listagem-itens');
+        if (!container) { isOrdenando = false; return; }
         const items = Array.from(container.querySelectorAll('.item-link'));
         items.sort((a, b) => {
             let valA, valB;
             if (ordenacaoAtual.criterio === 'nome') { valA = a.dataset.nome.toLowerCase(); valB = b.dataset.nome.toLowerCase(); }
-            else if (ordenacaoAtual.criterio === 'tipo') { valA = a.dataset.tipo; valB = b.dataset.tipo; if (valA === valB) return a.dataset.nome.localeCompare(b.dataset.nome); }
+            else if (ordenacaoAtual.criterio === 'tipo') { valA = a.dataset.tipo; valB = b.dataset.tipo; }
             else if (ordenacaoAtual.criterio === 'tamanho') { valA = parseTamanho(a.querySelector('.item-tamanho')?.textContent); valB = parseTamanho(b.querySelector('.item-tamanho')?.textContent); }
             else if (ordenacaoAtual.criterio === 'data') { valA = parseData(a.querySelector('.item-data')?.textContent); valB = parseData(b.querySelector('.item-data')?.textContent); }
             if (valA < valB) return ordenacaoAtual.ordem === 'asc' ? -1 : 1;
@@ -264,37 +265,32 @@ document.addEventListener('DOMContentLoaded', function () {
             return 0;
         });
         items.forEach(item => container.appendChild(item));
+        atualizarBotoesOrdenacao();
+        localStorage.setItem('ordenacao', JSON.stringify(ordenacaoAtual));
         isOrdenando = false;
     }
 
-    Object.entries(ordenacaoBotoes).forEach(([crit, btn]) => {
+    Object.entries(ordenacaoBotoes).forEach(([criterio, btn]) => {
         if (btn) btn.addEventListener('click', () => {
-            if (ordenacaoAtual.criterio === crit) ordenacaoAtual.ordem = ordenacaoAtual.ordem === 'asc' ? 'desc' : 'asc';
-            else { ordenacaoAtual.criterio = crit; ordenacaoAtual.ordem = 'asc'; }
-            localStorage.setItem('ordenacao', JSON.stringify(ordenacaoAtual));
-            atualizarBotoesOrdenacao();
+            if (ordenacaoAtual.criterio === criterio) ordenacaoAtual.ordem = ordenacaoAtual.ordem === 'asc' ? 'desc' : 'asc';
+            else { ordenacaoAtual.criterio = criterio; ordenacaoAtual.ordem = 'asc'; }
             ordenarItens();
         });
     });
 
-    document.addEventListener('listaAtualizada', () => {
-        atualizarBotoesOrdenacao();
-        ordenarItens();
-    });
-
-    setTimeout(() => { atualizarBotoesOrdenacao(); ordenarItens(); }, 100);
+    document.addEventListener('listaAtualizada', ordenarItens);
+    ordenarItens();
 });
 
-// ===== NAVEGAÇÃO DOS CARDS (DELEGAÇÃO) =====
+// ===== CLIQUE NOS ITENS (DELEGAÇÃO) =====
 document.addEventListener('DOMContentLoaded', function () {
-    const ignorarClique = (e) =>
-        e.target.closest('.item-checkbox') || e.target.closest('.item-checkbox-input') ||
-        e.target.closest('.botao-download') || e.target.closest('.botao-excluir') ||
-        e.target.closest('form') || e.target.closest('button');
-
     document.addEventListener('click', function (e) {
         const card = e.target.closest('.item-link');
-        if (!card || e.ctrlKey || ignorarClique(e)) return;
+        if (!card) return;
+        if (e.target.closest('.botao-download') || e.target.closest('.botao-excluir') ||
+            e.target.closest('form') || e.target.closest('button') ||
+            e.target.closest('.item-checkbox') || e.target.closest('.item-checkbox-input') ||
+            e.ctrlKey) return;
 
         const tipo = card.dataset.tipo;
         const caminho = card.dataset.caminho;
@@ -344,8 +340,31 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function atualizarSelecao() {
         const count = itensSelecionados.size;
-        if (selecaoContador) selecaoContador.textContent = count;
-        if (selecaoBarra) selecaoBarra.style.display = count > 0 ? 'flex' : 'none';
+        if (selecaoContador) {
+            selecaoContador.textContent = count;
+        }
+        
+        if (selecaoBarra) {
+            if (count > 0) {
+                // Garante que o display seja flex antes da animação
+                if (selecaoBarra.style.display === 'none') {
+                    selecaoBarra.style.display = 'flex';
+                }
+                // Pequeno delay para disparar a transição CSS
+                requestAnimationFrame(() => {
+                    selecaoBarra.classList.add('active');
+                });
+            } else {
+                selecaoBarra.classList.remove('active');
+                // Espera a transição de 0.4s do CSS terminar antes de ocultar
+                setTimeout(() => {
+                    if (itensSelecionados.size === 0) {
+                        selecaoBarra.style.display = 'none';
+                    }
+                }, 400);
+            }
+        }
+        
         document.querySelectorAll('.item-link').forEach(item => {
             item.classList.toggle('selecionado', itensSelecionados.has(item.dataset.caminho));
         });

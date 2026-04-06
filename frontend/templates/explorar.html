@@ -8,9 +8,7 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
 
-    <!-- Token CSRF disponível para o JavaScript via meta tag.
-         O explorar.js deve ler este valor e incluir em todas as
-         requisições POST/DELETE/AJAX como header X-CSRFToken. -->
+    <!-- Token CSRF disponível para o JavaScript via meta tag -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- Script de tema ANTES do CSS para evitar flash -->
@@ -88,10 +86,10 @@
                 <div class="top-actions">
                     <div class="view-toggle">
                         <button id="view-grid" class="view-btn active" title="Visualização em grade">
-                            <span>🗂️</span> Grade
+                            <span>🗂️</span> <span class="view-text">Grade</span>
                         </button>
                         <button id="view-list" class="view-btn" title="Visualização em lista">
-                            <span>📋</span> Lista
+                            <span>📋</span> <span class="view-text">Lista</span>
                         </button>
                     </div>
                     <button id="theme-toggle" class="theme-btn" aria-label="Alternar tema">
@@ -142,8 +140,10 @@
                             <button id="ordenar-tamanho" class="sort-btn" data-order="asc">Tamanho <span class="sort-arrow">↑</span></button>
                             <button id="ordenar-data" class="sort-btn" data-order="asc">Data <span class="sort-arrow">↑</span></button>
                         </div>
-                        <span class="item-count" id="view-total-itens">0</span>
-                        <span class="item-count-label">itens</span>
+                        <div class="item-count-wrapper">
+                            <span class="item-count" id="view-total-itens">0</span>
+                            <span class="item-count-label">itens</span>
+                        </div>
                     </div>
                 </div>
 
@@ -156,24 +156,24 @@
                 </div>
                 {% endif %}
 
-                <!-- BARRA DE SELEÇÃO MÚLTIPLA -->
-                <div id="selecao-barra" class="selection-bar" style="display: none;">
-                    <div class="selection-info">
-                        <span id="selecao-contador">0</span> itens selecionados
-                    </div>
-                    <div class="selection-actions">
-                        <button id="selecao-select-all" class="selection-btn">✅ Selecionar todos</button>
-                        <button id="selecao-clear" class="selection-btn">✕ Limpar</button>
-                        <button id="selecao-delete" class="selection-btn delete-btn">🗑️ Excluir</button>
-                        <button id="selecao-download" class="selection-btn download-btn">📦 Download ZIP</button>
-                    </div>
-                </div>
-
                 <!-- LISTAGEM DE ARQUIVOS -->
                 <div id="file-list-container">
                     {% include 'partials/_lista_arquivos.html' %}
                 </div>
 
+            </div>
+
+            <!-- BARRA DE SELEÇÃO MÚLTIPLA (FLUTUANTE) -->
+            <div id="selecao-barra" class="selection-bar" style="display: none;">
+                <div class="selection-info">
+                    <span id="selecao-contador">0</span> selecionados
+                </div>
+                <div class="selection-actions">
+                    <button id="selecao-select-all" class="selection-btn" title="Selecionar todos">✅</button>
+                    <button id="selecao-clear" class="selection-btn" title="Limpar seleção">✕</button>
+                    <button id="selecao-delete" class="selection-btn delete-btn" title="Excluir selecionados">🗑️</button>
+                    <button id="selecao-download" class="selection-btn download-btn" title="Download ZIP">📦</button>
+                </div>
             </div>
 
             <!-- MODAL CRIAR PASTA -->
@@ -242,7 +242,9 @@
                     <button class="lightbox-close" id="lightbox-close">&times;</button>
                 </div>
                 <div class="lightbox-image-container">
+                    <button class="lightbox-nav prev" id="lightbox-prev">❮</button>
                     <img src="" alt="" class="lightbox-image" id="lightbox-image">
+                    <button class="lightbox-nav next" id="lightbox-next">❯</button>
                 </div>
                 <div class="lightbox-footer">
                     <span class="lightbox-info" id="lightbox-info"></span>
@@ -253,52 +255,54 @@
                 </div>
             </div>
         </div>
-        <button class="lightbox-nav prev" id="lightbox-prev">‹</button>
-        <button class="lightbox-nav next" id="lightbox-next">›</button>
     </div>
 
-    <!-- Modal de confirmação -->
+    <!-- Modal de Confirmação Genérico -->
     <div id="confirmModal" class="modal-overlay" style="display: none;">
-        <div class="modal-container">
+        <div class="modal-container modal-small">
             <div class="modal-header">
-                <h3 class="modal-title" id="modalTitle">Confirmar exclusão</h3>
+                <h3 class="modal-title" id="modalTitle">Confirmar</h3>
                 <button class="modal-close" id="modalClose">&times;</button>
             </div>
             <div class="modal-body">
-                <p id="modalMessage">Tem certeza que deseja excluir este item?</p>
-                <p id="modalDetail" class="modal-detail"></p>
+                <p id="modalMessage" style="margin-bottom: 10px; font-weight: 500;"></p>
+                <p id="modalDetail" style="font-size: 0.85rem; color: var(--text-secondary); white-space: pre-wrap;"></p>
             </div>
             <div class="modal-footer">
                 <button class="modal-btn modal-btn-cancel" id="modalCancel">Cancelar</button>
-                <button class="modal-btn modal-btn-confirm" id="modalConfirm">Excluir</button>
+                <button class="modal-btn modal-btn-confirm" id="modalConfirm">Confirmar</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Overlay Global de Drag & Drop -->
+    <div id="global-drop-overlay" class="drop-overlay">
+        <div class="drop-content">
+            <div class="drop-icon">📤</div>
+            <div class="drop-text">Solte seus arquivos aqui para fazer upload</div>
+        </div>
+    </div>
+
+    <!-- Painel de Uploads -->
+    <div id="upload-panel" class="upload-panel" style="display: none;">
+        <div class="upload-panel-header">
+            <span class="upload-panel-title">Uploads</span>
+            <button class="upload-panel-close" onclick="fecharPainel()">&times;</button>
+        </div>
+        <div id="upload-list" class="upload-list">
+            <!-- Itens de upload serão inseridos aqui -->
         </div>
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="toast-notification" style="display: none;">
+    <div id="toast" class="toast" style="display: none;">
         <div class="toast-content">
-            <span class="toast-icon" id="toast-icon">✅</span>
-            <span class="toast-message" id="toast-message"></span>
+            <span id="toast-icon" class="toast-icon">✅</span>
+            <span id="toast-message" class="toast-message">Operação realizada!</span>
         </div>
     </div>
 
-    <!-- Drag & Drop Overlay -->
-    <div id="global-drop-overlay" class="drop-overlay">
-        <div class="drop-message">
-            📂 Solte os arquivos para enviar
-        </div>
-    </div>
-
-    <!-- Upload Panel -->
-    <div id="upload-panel" class="upload-panel">
-        <div class="upload-header">
-            <span>📤 Uploads</span>
-            <button onclick="fecharPainel()">✖</button>
-        </div>
-        <div id="upload-list"></div>
-    </div>
-
+    <!-- Scripts -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/explorar.js') }}"></script>
 
