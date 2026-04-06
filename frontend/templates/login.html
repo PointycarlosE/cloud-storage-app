@@ -51,6 +51,7 @@
             {% endwith %}
 
             <form method="POST" class="login-form" id="login-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="form-group">
                     <label for="username" class="form-label">👤 Usuário</label>
                     <input type="text" name="username" id="username" class="form-input" placeholder="Digite seu usuário"

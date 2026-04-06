@@ -8,6 +8,11 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
 
+    <!-- Token CSRF disponível para o JavaScript via meta tag.
+         O explorar.js deve ler este valor e incluir em todas as
+         requisições POST/DELETE/AJAX como header X-CSRFToken. -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <!-- Script de tema ANTES do CSS para evitar flash -->
     <script>
         (function () {
@@ -15,9 +20,7 @@
                 const savedTheme = localStorage.getItem('theme') || 'light';
                 document.documentElement.setAttribute('data-theme', savedTheme);
                 window.__initialTheme = savedTheme;
-            } catch (e) {
-                console.log('Erro ao acessar localStorage:', e);
-            }
+            } catch (e) {}
         })();
     </script>
 
@@ -57,8 +60,7 @@
             <div class="sidebar-footer">
                 <div class="user-info">
                     <span class="user-icon">👤</span>
-                    <span class="user-name">{{ current_user.nome if current_user.is_authenticated else 'Usuário'
-                        }}</span>
+                    <span class="user-name">{{ current_user.nome if current_user.is_authenticated else 'Usuário' }}</span>
                 </div>
                 <a href="{{ url_for('auth.logout') }}" class="logout-link">
                     <span class="logout-icon">🚪</span>
@@ -111,8 +113,7 @@
                         {% if loop.last %}
                         <span class="breadcrumb-current">{{ parte.nome }}</span>
                         {% else %}
-                        <a href="{{ url_for('file.explorar', caminho=parte.caminho) }}" class="breadcrumb-link">{{
-                            parte.nome }}</a>
+                        <a href="{{ url_for('file.explorar', caminho=parte.caminho) }}" class="breadcrumb-link">{{ parte.nome }}</a>
                         {% endif %}
                         {% endfor %}
                         {% endif %}
@@ -136,21 +137,17 @@
                     <div class="sort-bar">
                         <span class="sort-label">Ordenar:</span>
                         <div class="sort-buttons">
-                            <button id="ordenar-tipo" class="sort-btn active" data-order="asc">Tipo <span
-                                    class="sort-arrow">↑</span></button>
-                            <button id="ordenar-nome" class="sort-btn" data-order="asc">Nome <span
-                                    class="sort-arrow">↑</span></button>
-                            <button id="ordenar-tamanho" class="sort-btn" data-order="asc">Tamanho <span
-                                    class="sort-arrow">↑</span></button>
-                            <button id="ordenar-data" class="sort-btn" data-order="asc">Data <span
-                                    class="sort-arrow">↑</span></button>
+                            <button id="ordenar-tipo" class="sort-btn active" data-order="asc">Tipo <span class="sort-arrow">↑</span></button>
+                            <button id="ordenar-nome" class="sort-btn" data-order="asc">Nome <span class="sort-arrow">↑</span></button>
+                            <button id="ordenar-tamanho" class="sort-btn" data-order="asc">Tamanho <span class="sort-arrow">↑</span></button>
+                            <button id="ordenar-data" class="sort-btn" data-order="asc">Data <span class="sort-arrow">↑</span></button>
                         </div>
                         <span class="item-count" id="view-total-itens">0</span>
                         <span class="item-count-label">itens</span>
                     </div>
                 </div>
 
-                <!-- BOTÃO VOLTAR (se houver pasta pai) -->
+                <!-- BOTÃO VOLTAR -->
                 {% if pasta_pai is not none %}
                 <div class="back-button-wrapper">
                     <a href="{{ url_for('file.explorar', caminho=pasta_pai) }}" class="back-btn">
@@ -188,6 +185,7 @@
                     </div>
                     <form action="{{ url_for('file.criar_pasta', caminho=caminho_atual) }}" method="post"
                         class="modal-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="modal-body">
                             <input type="text" name="nome_pasta" placeholder="Nome da pasta" required
                                 class="modal-input">
@@ -206,7 +204,6 @@
 
     <!-- ===== COMPONENTES GLOBAIS ===== -->
 
-    <!-- Lightbox para imagens -->
     <!-- Audio Player Modal -->
     <div id="audioModal" class="lightbox-overlay" style="display: none;">
         <div class="lightbox-container">
@@ -235,6 +232,8 @@
             </div>
         </div>
     </div>
+
+    <!-- Lightbox para imagens -->
     <div class="lightbox-overlay" id="lightbox">
         <div class="lightbox-container">
             <div class="lightbox-content">

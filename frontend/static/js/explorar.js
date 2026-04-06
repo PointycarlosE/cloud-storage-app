@@ -1,4 +1,4 @@
-// Lightbox para imagens
+// ===== LIGHTBOX PARA IMAGENS =====
 document.addEventListener('DOMContentLoaded', function () {
     const lightbox = document.getElementById('lightbox');
     const lightboxImage = document.getElementById('lightbox-image');
@@ -19,17 +19,13 @@ document.addEventListener('DOMContentLoaded', function () {
             const link = card.closest('.item-link');
             if (link) {
                 const thumbnail = card.querySelector('.item-thumbnail');
-                const visualizarUrl = thumbnail ? thumbnail.src : '';
                 const nomeElement = card.querySelector('.item-nome');
-                const nome = nomeElement ? nomeElement.textContent : '';
                 const downloadBtn = card.querySelector('.botao-download');
-                const downloadUrl = downloadBtn ? downloadBtn.getAttribute('href') : '';
                 const deleteForm = card.querySelector('form');
-
                 images.push({
-                    nome: nome,
-                    visualizarUrl: visualizarUrl,
-                    downloadUrl: downloadUrl,
+                    nome: nomeElement ? nomeElement.textContent : '',
+                    visualizarUrl: thumbnail ? thumbnail.src : '',
+                    downloadUrl: downloadBtn ? downloadBtn.getAttribute('href') : '',
                     deleteForm: deleteForm,
                     elemento: card,
                     index: index
@@ -40,45 +36,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function openLightbox(index) {
         if (images.length === 0) return;
-
         currentImageIndex = index;
         const image = images[currentImageIndex];
-
         lightboxImage.src = image.visualizarUrl;
         lightboxTitle.textContent = image.nome;
         lightboxInfo.textContent = `Imagem ${currentImageIndex + 1} de ${images.length}`;
         lightboxDownload.href = image.downloadUrl;
 
-        // Lightbox - botão de excluir
         lightboxDelete.onclick = async function (e) {
             e.preventDefault();
             const image = images[currentImageIndex];
-
-            // Usar o modal personalizado
             const confirmado = await ConfirmModal.open({
                 title: 'Excluir imagem',
                 message: `Tem certeza que deseja excluir a imagem "${image.nome}"?`,
                 detail: 'Esta ação não pode ser desfeita.'
             });
-
-            if (confirmado) {
-                if (image.deleteForm) {
-                    showToast(`Excluindo ${image.nome}...`, 'info', 2000);
-
-                    // Clonar o formulário e submeter
-                    const form = image.deleteForm.cloneNode(true);
-                    document.body.appendChild(form);
-
-                    // Submeter o formulário clonado
-                    form.submit();
-
-                    // Remover o formulário após um pequeno delay
-                    setTimeout(() => {
-                        if (document.body.contains(form)) {
-                            document.body.removeChild(form);
-                        }
-                    }, 1000);
-                }
+            if (confirmado && image.deleteForm) {
+                showToast(`Excluindo ${image.nome}...`, 'info', 2000);
+                const form = image.deleteForm.cloneNode(true);
+                document.body.appendChild(form);
+                form.submit();
+                setTimeout(() => { if (document.body.contains(form)) document.body.removeChild(form); }, 1000);
             }
         };
 
@@ -93,17 +71,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function prevImage() {
-        if (images.length > 0) {
-            currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
-            openLightbox(currentImageIndex);
-        }
+        if (images.length > 0) { currentImageIndex = (currentImageIndex - 1 + images.length) % images.length; openLightbox(currentImageIndex); }
     }
 
     function nextImage() {
-        if (images.length > 0) {
-            currentImageIndex = (currentImageIndex + 1) % images.length;
-            openLightbox(currentImageIndex);
-        }
+        if (images.length > 0) { currentImageIndex = (currentImageIndex + 1) % images.length; openLightbox(currentImageIndex); }
     }
 
     updateImageList();
@@ -112,26 +84,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const link = card.closest('.item-link');
         if (link) {
             link.addEventListener('click', function (e) {
-                if (e.target.closest('.botao-download') ||
-                    e.target.closest('.botao-excluir') ||
-                    e.target.closest('form') ||
-                    e.target.closest('button') ||
-                    e.target.closest('.item-checkbox') ||
-                    e.target.closest('.item-checkbox-input')) {
-                    return;
-                }
-
+                if (e.target.closest('.botao-download') || e.target.closest('.botao-excluir') ||
+                    e.target.closest('form') || e.target.closest('button') ||
+                    e.target.closest('.item-checkbox') || e.target.closest('.item-checkbox-input')) return;
                 e.preventDefault();
                 e.stopPropagation();
-
                 updateImageList();
-
                 const currentCard = e.currentTarget.querySelector('.item-imagem');
                 const newIndex = Array.from(document.querySelectorAll('.item-imagem')).indexOf(currentCard);
-
-                if (newIndex !== -1) {
-                    openLightbox(newIndex);
-                }
+                if (newIndex !== -1) openLightbox(newIndex);
             });
         }
     });
@@ -141,24 +102,14 @@ document.addEventListener('DOMContentLoaded', function () {
     lightboxNext.addEventListener('click', nextImage);
 
     document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && lightbox.classList.contains('active')) {
-            closeLightbox();
-        }
-
+        if (e.key === 'Escape' && lightbox.classList.contains('active')) closeLightbox();
         if (lightbox.classList.contains('active')) {
-            if (e.key === 'ArrowLeft') {
-                prevImage();
-            } else if (e.key === 'ArrowRight') {
-                nextImage();
-            }
+            if (e.key === 'ArrowLeft') prevImage();
+            else if (e.key === 'ArrowRight') nextImage();
         }
     });
 
-    lightbox.addEventListener('click', function (e) {
-        if (e.target === lightbox) {
-            closeLightbox();
-        }
-    });
+    lightbox.addEventListener('click', function (e) { if (e.target === lightbox) closeLightbox(); });
 });
 
 // ===== BARRA DE PESQUISA =====
@@ -170,53 +121,34 @@ document.addEventListener('DOMContentLoaded', function () {
     let searchTimeout;
 
     function updateCounter(count) {
-        if (count === 0) {
-            searchCounter.textContent = 'Nenhum resultado';
-        } else if (count === 1) {
-            searchCounter.textContent = '1 resultado';
-        } else {
-            searchCounter.textContent = `${count} resultados`;
-        }
+        if (!searchCounter) return;
+        if (count === 0) searchCounter.textContent = 'Nenhum resultado';
+        else if (count === 1) searchCounter.textContent = '1 resultado';
+        else searchCounter.textContent = `${count} resultados`;
     }
 
     function performSearch() {
         const searchTerm = searchInput.value.toLowerCase().trim();
-
         searchClear.classList.toggle('visible', searchTerm.length > 0);
 
         if (searchTerm === '') {
-            items.forEach(item => {
-                item.style.display = 'block';
-                item.classList.remove('destaque-pesquisa');
-            });
+            items.forEach(item => { item.style.display = 'block'; item.classList.remove('destaque-pesquisa'); });
             updateCounter(items.length);
-
-            if (typeof window.updateItemCount === 'function') {
-                window.updateItemCount();
-            }
+            if (typeof window.updateItemCount === 'function') window.updateItemCount();
             return;
         }
 
         let matchCount = 0;
-
         items.forEach(item => {
-            const nomeElement = item.querySelector('.item-nome');
-            const tipoElement = item.querySelector('.item-tipo');
-
-            const nome = nomeElement ? nomeElement.textContent.toLowerCase() : '';
-            const tipo = tipoElement ? tipoElement.textContent.toLowerCase() : '';
-
+            const nome = item.querySelector('.item-nome')?.textContent.toLowerCase() || '';
+            const tipo = item.querySelector('.item-tipo')?.textContent.toLowerCase() || '';
             const matches = nome.includes(searchTerm) || tipo.includes(searchTerm);
-
             if (matches) {
                 item.style.display = 'block';
                 matchCount++;
-
                 if (nome === searchTerm || tipo === searchTerm) {
                     item.classList.add('destaque-pesquisa');
-                    setTimeout(() => {
-                        item.classList.remove('destaque-pesquisa');
-                    }, 1000);
+                    setTimeout(() => item.classList.remove('destaque-pesquisa'), 1000);
                 }
             } else {
                 item.style.display = 'none';
@@ -224,23 +156,11 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         updateCounter(matchCount);
-
-        if (typeof window.updateItemCount === 'function') {
-            window.updateItemCount();
-        }
+        if (typeof window.updateItemCount === 'function') window.updateItemCount();
     }
 
-    searchInput.addEventListener('input', function () {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(performSearch, 150);
-    });
-
-    searchClear.addEventListener('click', function () {
-        searchInput.value = '';
-        searchInput.focus();
-        performSearch();
-    });
-
+    if (searchInput) searchInput.addEventListener('input', function () { clearTimeout(searchTimeout); searchTimeout = setTimeout(performSearch, 150); });
+    if (searchClear) searchClear.addEventListener('click', function () { searchInput.value = ''; searchInput.focus(); performSearch(); });
     updateCounter(items.length);
 });
 
@@ -253,55 +173,34 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window.updateItemCount = function () {
         const visibleItems = document.querySelectorAll('.item-link:not([style*="display: none"])').length;
-        totalItensSpan.textContent = visibleItems;
+        if (totalItensSpan) totalItensSpan.textContent = visibleItems;
     };
 
     const savedView = localStorage.getItem('viewMode') || 'grid';
     setViewMode(savedView);
 
-    viewGrid.addEventListener('click', function () {
-        setViewMode('grid');
-    });
-
-    viewList.addEventListener('click', function () {
-        setViewMode('list');
-    });
+    if (viewGrid) viewGrid.addEventListener('click', () => setViewMode('grid'));
+    if (viewList) viewList.addEventListener('click', () => setViewMode('list'));
 
     function setViewMode(mode) {
-        viewGrid.classList.toggle('active', mode === 'grid');
-        viewList.classList.toggle('active', mode === 'list');
-
-        if (mode === 'list') {
-            listagemContainer.classList.add('view-list');
-        } else {
-            listagemContainer.classList.remove('view-list');
-        }
-
+        viewGrid?.classList.toggle('active', mode === 'grid');
+        viewList?.classList.toggle('active', mode === 'list');
+        if (listagemContainer) listagemContainer.classList.toggle('view-list', mode === 'list');
         localStorage.setItem('viewMode', mode);
-
         setTimeout(window.updateItemCount, 50);
     }
 
     const searchInput = document.getElementById('pesquisa-input');
-    if (searchInput) {
-        searchInput.addEventListener('input', function () {
-            setTimeout(window.updateItemCount, 200);
-        });
-    }
+    if (searchInput) searchInput.addEventListener('input', () => setTimeout(window.updateItemCount, 200));
 
     window.updateItemCount();
 
     const observer = new MutationObserver(function (mutations) {
         mutations.forEach(function (mutation) {
-            if (mutation.attributeName === 'style') {
-                window.updateItemCount();
-            }
+            if (mutation.attributeName === 'style') window.updateItemCount();
         });
     });
-
-    document.querySelectorAll('.item-link').forEach(item => {
-        observer.observe(item, { attributes: true });
-    });
+    document.querySelectorAll('.item-link').forEach(item => observer.observe(item, { attributes: true }));
 });
 
 // ===== ORDENAÇÃO =====
@@ -313,189 +212,90 @@ document.addEventListener('DOMContentLoaded', function () {
         data: document.getElementById('ordenar-data')
     };
 
-    if (!ordenacaoBotoes.nome) {
-        console.log('Botões de ordenação não encontrados');
-        return;
-    }
+    if (!ordenacaoBotoes.nome) return;
 
-    let ordenacaoAtual = {
-        criterio: 'tipo',
-        ordem: 'asc'
-    };
-
+    let ordenacaoAtual = { criterio: 'tipo', ordem: 'asc' };
     let isOrdenando = false;
 
     try {
-        const savedOrdenacao = localStorage.getItem('ordenacao');
-        if (savedOrdenacao) {
-            ordenacaoAtual = JSON.parse(savedOrdenacao);
-        }
-    } catch (e) {
-        console.error('Erro ao carregar ordenação salva:', e);
-    }
+        const saved = localStorage.getItem('ordenacao');
+        if (saved) ordenacaoAtual = JSON.parse(saved);
+    } catch (e) {}
 
     function atualizarBotoesOrdenacao() {
-        Object.values(ordenacaoBotoes).forEach(btn => {
-            if (btn) {
-                btn.classList.remove('active');
-                btn.removeAttribute('data-order'); // Limpa atributo antigo
-            }
-        });
-
+        Object.values(ordenacaoBotoes).forEach(btn => { if (btn) { btn.classList.remove('active'); btn.removeAttribute('data-order'); } });
         const btnAtual = ordenacaoBotoes[ordenacaoAtual.criterio];
-        if (btnAtual) {
-            btnAtual.classList.add('active');
-            btnAtual.setAttribute('data-order', ordenacaoAtual.ordem);
-        }
+        if (btnAtual) { btnAtual.classList.add('active'); btnAtual.setAttribute('data-order', ordenacaoAtual.ordem); }
     }
 
-    function parseTamanho(tamanhoTexto) {
-        if (!tamanhoTexto || tamanhoTexto === '--') return 0;
-
-        const match = tamanhoTexto.match(/([\d.]+)\s*(\w+)/);
-        if (!match) return 0;
-
-        const [_, valor, unidade] = match;
-        const unidades = { 'B': 1, 'KB': 1024, 'MB': 1024 ** 2, 'GB': 1024 ** 3, 'TB': 1024 ** 4 };
-        return parseFloat(valor) * (unidades[unidade] || 1);
+    function parseTamanho(t) {
+        if (!t || t === '--') return 0;
+        const m = t.match(/([\d.]+)\s*(\w+)/);
+        if (!m) return 0;
+        const units = { 'B': 1, 'KB': 1024, 'MB': 1024 ** 2, 'GB': 1024 ** 3, 'TB': 1024 ** 4 };
+        return parseFloat(m[1]) * (units[m[2]] || 1);
     }
 
-    function parseData(dataTexto) {
-        if (!dataTexto) return 0;
-
-        if (dataTexto.includes('Hoje')) {
-            const hora = dataTexto.match(/(\d{2}):(\d{2})/);
-            if (hora) {
-                const hoje = new Date();
-                hoje.setHours(parseInt(hora[1]), parseInt(hora[2]), 0);
-                return hoje.getTime();
-            }
-        } else if (dataTexto.includes('Ontem')) {
-            const hora = dataTexto.match(/(\d{2}):(\d{2})/);
-            if (hora) {
-                const ontem = new Date();
-                ontem.setDate(ontem.getDate() - 1);
-                ontem.setHours(parseInt(hora[1]), parseInt(hora[2]), 0);
-                return ontem.getTime();
-            }
+    function parseData(d) {
+        if (!d) return 0;
+        if (d.includes('Hoje')) {
+            const h = d.match(/(\d{2}):(\d{2})/);
+            if (h) { const hoje = new Date(); hoje.setHours(parseInt(h[1]), parseInt(h[2]), 0); return hoje.getTime(); }
+        } else if (d.includes('Ontem')) {
+            const h = d.match(/(\d{2}):(\d{2})/);
+            if (h) { const ontem = new Date(); ontem.setDate(ontem.getDate() - 1); ontem.setHours(parseInt(h[1]), parseInt(h[2]), 0); return ontem.getTime(); }
         } else {
-            const partes = dataTexto.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
-            if (partes) {
-                const [_, dia, mes, ano, hora, min] = partes;
-                return new Date(ano, mes - 1, dia, hora, min).getTime();
-            }
+            const p = d.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+            if (p) return new Date(p[3], p[2] - 1, p[1], p[4], p[5]).getTime();
         }
         return 0;
     }
 
     function ordenarItens() {
         if (isOrdenando) return;
-
         const container = document.querySelector('.listagem-itens');
         if (!container) return;
-
         const items = Array.from(container.querySelectorAll('.item-link'));
         if (items.length === 0) return;
-
         isOrdenando = true;
 
         items.sort((a, b) => {
-            let valorA, valorB;
-
+            let vA, vB;
             switch (ordenacaoAtual.criterio) {
                 case 'nome':
-                    const nomeA = a.querySelector('.item-nome')?.textContent || '';
-                    const nomeB = b.querySelector('.item-nome')?.textContent || '';
-                    valorA = nomeA.toLowerCase();
-                    valorB = nomeB.toLowerCase();
+                    vA = (a.querySelector('.item-nome')?.textContent || '').toLowerCase();
+                    vB = (b.querySelector('.item-nome')?.textContent || '').toLowerCase();
                     break;
-
                 case 'tipo':
-                    const getTipoPeso = (item) => {
-                        if (item.querySelector('.item-pasta')) return 1;
-                        if (item.querySelector('.item-imagem')) return 2;
-                        if (item.querySelector('.item-audio')) return 3;
-                        return 4;
-                    };
-                    valorA = getTipoPeso(a);
-                    valorB = getTipoPeso(b);
+                    const peso = (i) => i.querySelector('.item-pasta') ? 1 : i.querySelector('.item-imagem') ? 2 : i.querySelector('.item-audio') ? 3 : 4;
+                    vA = peso(a); vB = peso(b);
                     break;
-
                 case 'tamanho':
-                    if (a.querySelector('.item-pasta')) {
-                        valorA = Infinity;
-                    } else {
-                        const tamanhoA = a.querySelector('.item-tamanho')?.textContent || '0 B';
-                        valorA = parseTamanho(tamanhoA);
-                    }
-
-                    if (b.querySelector('.item-pasta')) {
-                        valorB = Infinity;
-                    } else {
-                        const tamanhoB = b.querySelector('.item-tamanho')?.textContent || '0 B';
-                        valorB = parseTamanho(tamanhoB);
-                    }
+                    vA = a.querySelector('.item-pasta') ? Infinity : parseTamanho(a.querySelector('.item-tamanho')?.textContent || '0 B');
+                    vB = b.querySelector('.item-pasta') ? Infinity : parseTamanho(b.querySelector('.item-tamanho')?.textContent || '0 B');
                     break;
-
                 case 'data':
-                    if (a.querySelector('.item-pasta')) {
-                        valorA = Infinity;
-                    } else {
-                        const dataA = a.querySelector('.item-data')?.textContent || '';
-                        valorA = parseData(dataA);
-                    }
-
-                    if (b.querySelector('.item-pasta')) {
-                        valorB = Infinity;
-                    } else {
-                        const dataB = b.querySelector('.item-data')?.textContent || '';
-                        valorB = parseData(dataB);
-                    }
+                    vA = a.querySelector('.item-pasta') ? Infinity : parseData(a.querySelector('.item-data')?.textContent || '');
+                    vB = b.querySelector('.item-pasta') ? Infinity : parseData(b.querySelector('.item-data')?.textContent || '');
                     break;
-
-                default:
-                    return 0;
+                default: return 0;
             }
 
-            let comparacao = 0;
-            if (typeof valorA === 'string' && typeof valorB === 'string') {
-                comparacao = valorA.localeCompare(valorB);
-            } else {
-                comparacao = valorA - valorB;
-            }
-
-            return ordenacaoAtual.ordem === 'asc' ? comparacao : -comparacao;
+            const cmp = typeof vA === 'string' ? vA.localeCompare(vB) : vA - vB;
+            return ordenacaoAtual.ordem === 'asc' ? cmp : -cmp;
         });
 
         items.forEach(item => container.appendChild(item));
-
-        setTimeout(() => {
-            isOrdenando = false;
-        }, 100);
-
-        if (typeof window.updateItemCount === 'function') {
-            window.updateItemCount();
-        }
+        setTimeout(() => { isOrdenando = false; }, 100);
+        if (typeof window.updateItemCount === 'function') window.updateItemCount();
     }
 
     Object.entries(ordenacaoBotoes).forEach(([criterio, btn]) => {
         if (btn) {
             btn.addEventListener('click', function () {
-                const clicouNoMesmo = ordenacaoAtual.criterio === criterio;
-
-                if (clicouNoMesmo) {
-                    ordenacaoAtual.ordem = ordenacaoAtual.ordem === 'asc' ? 'desc' : 'asc';
-                } else {
-                    ordenacaoAtual.criterio = criterio;
-                    ordenacaoAtual.ordem = 'asc';
-                }
-
-                try {
-                    localStorage.setItem('ordenacao', JSON.stringify(ordenacaoAtual));
-                } catch (e) {
-                    console.error('Erro ao salvar ordenação:', e);
-                }
-
+                if (ordenacaoAtual.criterio === criterio) ordenacaoAtual.ordem = ordenacaoAtual.ordem === 'asc' ? 'desc' : 'asc';
+                else { ordenacaoAtual.criterio = criterio; ordenacaoAtual.ordem = 'asc'; }
+                try { localStorage.setItem('ordenacao', JSON.stringify(ordenacaoAtual)); } catch (e) {}
                 atualizarBotoesOrdenacao();
                 ordenarItens();
             });
@@ -503,361 +303,207 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     const searchInput = document.getElementById('pesquisa-input');
-    if (searchInput) {
-        searchInput.addEventListener('input', function () {
-            setTimeout(ordenarItens, 250);
-        });
-    }
+    if (searchInput) searchInput.addEventListener('input', () => setTimeout(ordenarItens, 250));
 
     const container = document.querySelector('.listagem-itens');
     if (container) {
         let timeoutId = null;
-
-        const observer = new MutationObserver(function (mutations) {
+        const obs = new MutationObserver(function (mutations) {
             if (isOrdenando) return;
-
-            const foiPesquisa = mutations.some(m =>
-                m.type === 'attributes' && m.attributeName === 'style'
-            );
-
+            const foiPesquisa = mutations.some(m => m.type === 'attributes' && m.attributeName === 'style');
             if (foiPesquisa) {
-                if (timeoutId) {
-                    clearTimeout(timeoutId);
-                }
-
-                timeoutId = setTimeout(() => {
-                    ordenarItens();
-                    timeoutId = null;
-                }, 150);
+                if (timeoutId) clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => { ordenarItens(); timeoutId = null; }, 150);
             }
         });
-
-        observer.observe(container, {
-            childList: true,
-            attributes: true,
-            subtree: true,
-            attributeFilter: ['style']
-        });
+        obs.observe(container, { childList: true, attributes: true, subtree: true, attributeFilter: ['style'] });
     }
 
-    setTimeout(() => {
-        atualizarBotoesOrdenacao();
-        ordenarItens();
-    }, 100);
+    setTimeout(() => { atualizarBotoesOrdenacao(); ordenarItens(); }, 100);
 });
 
-// ===== NAVEGAÇÃO SIMPLES DOS CARDS (modificada) =====
+// ===== NAVEGAÇÃO DOS CARDS =====
 document.addEventListener('DOMContentLoaded', function () {
-    // Para cada card de pasta
+    const ignorarClique = (e) =>
+        e.target.closest('.item-checkbox') || e.target.closest('.item-checkbox-input') ||
+        e.target.closest('.botao-download') || e.target.closest('.botao-excluir') ||
+        e.target.closest('form') || e.target.closest('button');
+
     document.querySelectorAll('[data-tipo="pasta"]').forEach(card => {
         card.addEventListener('click', function (e) {
-            // Se Ctrl estiver pressionado, não navega (deixa a seleção funcionar)
-            if (e.ctrlKey) {
-                e.preventDefault();
-                return;
-            }
-            
-            // Se clicou em checkbox ou botões, não navega
-            if (e.target.closest('.item-checkbox') ||
-                e.target.closest('.item-checkbox-input') ||
-                e.target.closest('.botao-download') ||
-                e.target.closest('.botao-excluir') ||
-                e.target.closest('form') ||
-                e.target.closest('button')) {
-                return;
-            }
-
+            if (e.ctrlKey || ignorarClique(e)) return;
             const caminho = this.dataset.caminho;
-            if (caminho) {
-                window.location.href = `/explorar/${caminho}`;
-            }
+            if (caminho) window.location.href = `/explorar/${caminho}`;
         });
     });
 
-    // Para imagens (lightbox)
     document.querySelectorAll('[data-tipo="imagem"]').forEach(card => {
         card.addEventListener('click', function (e) {
-            // Se Ctrl estiver pressionado, não abre lightbox
-            if (e.ctrlKey) {
-                e.preventDefault();
-                return;
-            }
-            
-            if (e.target.closest('.item-checkbox') ||
-                e.target.closest('.item-checkbox-input') ||
-                e.target.closest('.botao-download') ||
-                e.target.closest('.botao-excluir') ||
-                e.target.closest('form') ||
-                e.target.closest('button')) {
-                return;
-            }
-
-            // Disparar o lightbox
+            if (e.ctrlKey || ignorarClique(e)) return;
             const imgCard = this.querySelector('.item-imagem');
-            if (imgCard) {
-                const event = new MouseEvent('click', { bubbles: true });
-                imgCard.dispatchEvent(event);
-            }
+            if (imgCard) imgCard.dispatchEvent(new MouseEvent('click', { bubbles: true }));
         });
     });
 
-    // Para áudios
     document.querySelectorAll('[data-tipo="audio"]').forEach(card => {
         card.addEventListener('click', function (e) {
-            // Se Ctrl estiver pressionado, não abre modal
-            if (e.ctrlKey) {
-                e.preventDefault();
-                return;
-            }
-            
-            if (e.target.closest('.item-checkbox') ||
-                e.target.closest('.item-checkbox-input') ||
-                e.target.closest('.botao-download') ||
-                e.target.closest('.botao-excluir') ||
-                e.target.closest('form') ||
-                e.target.closest('button') ||
-                e.target.closest('audio')) {
-                return;
-            }
-
-            e.preventDefault();
-            e.stopPropagation();
-
+            if (e.ctrlKey || ignorarClique(e) || e.target.closest('audio')) return;
+            e.preventDefault(); e.stopPropagation();
             const caminho = this.dataset.caminho;
             const nome = this.querySelector('.item-nome')?.textContent || '';
-            const visualizarUrl = `/visualizar/${caminho}`;
-            const downloadUrl = `/download/${caminho}`;
-            const deleteForm = this.querySelector('.form-excluir');
-
             if (typeof window.openAudioModal === 'function') {
-                window.openAudioModal(visualizarUrl, nome, downloadUrl, deleteForm);
+                window.openAudioModal(`/visualizar/${caminho}`, nome, `/download/${caminho}`, this.querySelector('.form-excluir'));
             }
         });
     });
 
-    // Para arquivos comuns
     document.querySelectorAll('[data-tipo="arquivo"]').forEach(card => {
         card.addEventListener('click', function (e) {
-            // Se Ctrl estiver pressionado, não faz download
-            if (e.ctrlKey) {
-                e.preventDefault();
-                return;
-            }
-            
-            if (e.target.closest('.item-checkbox') ||
-                e.target.closest('.item-checkbox-input') ||
-                e.target.closest('.botao-download') ||
-                e.target.closest('.botao-excluir') ||
-                e.target.closest('form') ||
-                e.target.closest('button')) {
-                return;
-            }
-
+            if (e.ctrlKey || ignorarClique(e)) return;
             const caminho = this.dataset.caminho;
-            if (caminho) {
-                window.location.href = `/download/${caminho}`;
-            }
+            if (caminho) window.location.href = `/download/${caminho}`;
         });
     });
 });
 
 // ===== SELEÇÃO MÚLTIPLA =====
 document.addEventListener('DOMContentLoaded', function () {
-    const selecaoBarra = document.getElementById('selecao-barra');
+    const selecaoBarra    = document.getElementById('selecao-barra');
     const selecaoContador = document.getElementById('selecao-contador');
     const selecaoSelectAll = document.getElementById('selecao-select-all');
-    const selecaoClear = document.getElementById('selecao-clear');
-    const selecaoDelete = document.getElementById('selecao-delete');
+    const selecaoClear    = document.getElementById('selecao-clear');
+    const selecaoDelete   = document.getElementById('selecao-delete');
     const selecaoDownload = document.getElementById('selecao-download');
 
+    let itensSelecionados = new Set();
+    let processandoObserver = false;
+
+    // Ctrl+Clique para seleção individual
     document.addEventListener('click', function (e) {
-        // Verifica se a tecla Ctrl está pressionada
         if (e.ctrlKey) {
-            // Procura o card mais próximo do clique
             const card = e.target.closest('.item-link');
             if (card) {
-                e.preventDefault();
-                e.stopPropagation();
-
-                // Encontra o checkbox dentro do card
+                e.preventDefault(); e.stopPropagation();
                 const checkbox = card.querySelector('.item-checkbox-input');
                 if (checkbox) {
-                    // Inverte o estado do checkbox
                     checkbox.checked = !checkbox.checked;
-
-                    // Dispara o evento change manualmente
-                    const changeEvent = new Event('change', { bubbles: true });
-                    checkbox.dispatchEvent(changeEvent);
-
-                    // Feedback visual: piscar o card
-                    card.classList.add('selecionado');
-                    setTimeout(() => {
-                        // Não remove a classe porque já foi adicionada pelo evento change
-                    }, 100);
-
-                    console.log(`Ctrl+Clique: ${checkbox.checked ? 'Selecionou' : 'Desselecionou'} ${card.dataset.nome}`);
+                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
                 }
             }
         }
     });
 
-    let itensSelecionados = new Set();
-    let processandoObserver = false;
-
     function atualizarSelecao() {
         const count = itensSelecionados.size;
-        selecaoContador.textContent = count;
-        selecaoBarra.style.display = count > 0 ? 'flex' : 'none';
-
+        if (selecaoContador) selecaoContador.textContent = count;
+        if (selecaoBarra) selecaoBarra.style.display = count > 0 ? 'flex' : 'none';
         document.querySelectorAll('.item-link').forEach(item => {
-            const caminho = item.dataset.caminho;
-            if (itensSelecionados.has(caminho)) {
-                item.classList.add('selecionado');
-            } else {
-                item.classList.remove('selecionado');
-            }
+            item.classList.toggle('selecionado', itensSelecionados.has(item.dataset.caminho));
         });
     }
 
-    // Função para configurar eventos nos checkboxes
-    function configurarCheckbox(checkbox) {
-        // Remove eventos antigos (se houver)
-        checkbox.removeEventListener('change', handleCheckboxChange);
-        // Adiciona evento novo
-        checkbox.addEventListener('change', handleCheckboxChange);
-    }
-
-    // Handler separado para o evento change
     function handleCheckboxChange(e) {
         e.stopPropagation();
         const checkbox = e.target;
         const caminho = checkbox.dataset.caminho;
         const item = checkbox.closest('.item-link');
-
-        if (checkbox.checked) {
-            itensSelecionados.add(caminho);
-            item.classList.add('selecionado');
-        } else {
-            itensSelecionados.delete(caminho);
-            item.classList.remove('selecionado');
-        }
-
+        if (checkbox.checked) { itensSelecionados.add(caminho); item?.classList.add('selecionado'); }
+        else { itensSelecionados.delete(caminho); item?.classList.remove('selecionado'); }
         atualizarSelecao();
     }
 
-    // Configurar todos os checkboxes existentes
+    function configurarCheckbox(checkbox) {
+        checkbox.removeEventListener('change', handleCheckboxChange);
+        checkbox.addEventListener('change', handleCheckboxChange);
+    }
+
     document.querySelectorAll('.item-checkbox-input').forEach(configurarCheckbox);
 
-    // Botão selecionar todos
-    selecaoSelectAll.addEventListener('click', function () {
+    selecaoSelectAll?.addEventListener('click', function () {
         const checkboxes = document.querySelectorAll('.item-checkbox-input');
         const todosSelecionados = Array.from(checkboxes).every(cb => cb.checked);
-
         checkboxes.forEach(checkbox => {
             checkbox.checked = !todosSelecionados;
             const caminho = checkbox.dataset.caminho;
             const item = checkbox.closest('.item-link');
-
-            if (!todosSelecionados) {
-                itensSelecionados.add(caminho);
-                item.classList.add('selecionado');
-            } else {
-                itensSelecionados.delete(caminho);
-                item.classList.remove('selecionado');
-            }
+            if (!todosSelecionados) { itensSelecionados.add(caminho); item?.classList.add('selecionado'); }
+            else { itensSelecionados.delete(caminho); item?.classList.remove('selecionado'); }
         });
-
         atualizarSelecao();
     });
 
-    // Botão limpar seleção
-    selecaoClear.addEventListener('click', function () {
-        document.querySelectorAll('.item-checkbox-input').forEach(checkbox => {
-            checkbox.checked = false;
-            checkbox.closest('.item-link').classList.remove('selecionado');
-        });
-
+    selecaoClear?.addEventListener('click', function () {
+        document.querySelectorAll('.item-checkbox-input').forEach(cb => { cb.checked = false; cb.closest('.item-link')?.classList.remove('selecionado'); });
         itensSelecionados.clear();
         atualizarSelecao();
     });
 
-    // Botão deletar selecionados - VERSÃO COM TOAST
-    selecaoDelete.addEventListener('click', async function (e) {
+    // ===== DELETAR MÚLTIPLOS — com CSRF =====
+    selecaoDelete?.addEventListener('click', async function (e) {
         e.stopPropagation();
-
         if (itensSelecionados.size === 0) return;
 
         const mensagem = itensSelecionados.size === 1
             ? 'Tem certeza que deseja excluir este item?'
             : `Tem certeza que deseja excluir ${itensSelecionados.size} itens?`;
 
-        const detalhe = Array.from(itensSelecionados).slice(0, 5).join('\n');
-        const detalheCompleto = itensSelecionados.size > 5
-            ? `${detalhe}\n... e mais ${itensSelecionados.size - 5} itens`
-            : detalhe;
+        const detalhe = Array.from(itensSelecionados).slice(0, 5).join('\n')
+            + (itensSelecionados.size > 5 ? `\n... e mais ${itensSelecionados.size - 5} itens` : '');
 
-        const confirmado = await ConfirmModal.open({
-            title: 'Excluir itens selecionados',
-            message: mensagem,
-            detail: detalheCompleto
-        });
-
+        const confirmado = await ConfirmModal.open({ title: 'Excluir itens selecionados', message: mensagem, detail: detalhe });
         if (!confirmado) return;
 
-        // Mostrar loading no botão
         const textoOriginal = selecaoDelete.innerHTML;
         selecaoDelete.disabled = true;
-        selecaoDelete.innerHTML = '<span class="selecao-icon">⏳</span> Excluindo...';
+        selecaoDelete.innerHTML = '<span>⏳</span> Excluindo...';
 
         try {
             const response = await fetch('/deletar_multiplos', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    // ✅ CSRF: obrigatório para o flask-wtf aceitar
+                    'X-CSRFToken': getCsrfToken()
                 },
-                body: JSON.stringify({
-                    caminhos: Array.from(itensSelecionados)
-                })
+                body: JSON.stringify({ caminhos: Array.from(itensSelecionados) })
             });
 
             const resultado = await response.json();
 
             if (resultado.sucesso) {
-                // Mostrar toast de sucesso
                 if (resultado.erros && resultado.erros.length > 0) {
-                    showToast(`✅ ${resultado.excluidos} itens excluídos\n❌ ${resultado.erros.length} falhas`, 'warning');
+                    showToast(`✅ ${resultado.excluidos} excluídos | ❌ ${resultado.erros.length} falhas`, 'warning');
                 } else {
                     showToast(`✅ ${resultado.excluidos} itens excluídos com sucesso!`, 'success');
                 }
-
-                // Recarregar a página após um pequeno delay
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
+                setTimeout(() => window.location.reload(), 1500);
             } else {
                 showToast(`Erro: ${resultado.erro}`, 'error');
             }
         } catch (error) {
-            console.error('Erro na exclusão:', error);
             showToast('Erro ao excluir itens. Tente novamente.', 'error');
         } finally {
-            // Restaurar botão
             selecaoDelete.disabled = false;
             selecaoDelete.innerHTML = textoOriginal;
         }
     });
 
-    // Botão download ZIP (substitua o placeholder existente)
-    selecaoDownload.addEventListener('click', function () {
+    // ===== DOWNLOAD ZIP — com CSRF =====
+    selecaoDownload?.addEventListener('click', function () {
         if (itensSelecionados.size === 0) return;
 
-        // Criar formulário dinamicamente
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = "{{ url_for('file.download_zip') }}";
+        form.action = '/download_zip';
         form.style.display = 'none';
 
-        // Adicionar cada caminho selecionado como input
+        // ✅ CSRF: incluir token no form gerado dinamicamente
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = getCsrfToken();
+        form.appendChild(csrfInput);
+
         itensSelecionados.forEach(caminho => {
             const input = document.createElement('input');
             input.type = 'hidden';
@@ -866,267 +512,135 @@ document.addEventListener('DOMContentLoaded', function () {
             form.appendChild(input);
         });
 
-        // Adicionar formulário ao body e submeter
         document.body.appendChild(form);
         form.submit();
-
-        // Limpar o formulário após o envio
-        setTimeout(() => {
-            document.body.removeChild(form);
-        }, 1000);
+        setTimeout(() => { if (document.body.contains(form)) document.body.removeChild(form); }, 1000);
     });
 
-    // ===== ATALHOS DE TECLADO =====
-
-    // Ctrl+A para selecionar todos
+    // Atalhos de teclado
     document.addEventListener('keydown', function (e) {
-        if (e.ctrlKey && e.key === 'a') {
-            e.preventDefault();
-            e.stopPropagation();
-            selecaoSelectAll.click();
-        }
-    });
-
-    // Delete para excluir selecionados
-    document.addEventListener('keydown', function (e) {
-        // Verifica se a tecla pressionada é Delete
-        if (e.key === 'Delete' || e.key === 'Del') {
-            // Verifica se há itens selecionados
-            if (itensSelecionados.size > 0) {
-                // Verifica se não está digitando em um input
-                const tag = e.target.tagName.toLowerCase();
-                if (tag !== 'input' && tag !== 'textarea' && !e.target.isContentEditable) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    // Disparar o clique no botão deletar
-                    selecaoDelete.click();
-                }
+        if (e.ctrlKey && e.key === 'a') { e.preventDefault(); e.stopPropagation(); selecaoSelectAll?.click(); }
+        if ((e.key === 'Delete' || e.key === 'Del') && itensSelecionados.size > 0) {
+            const tag = e.target.tagName.toLowerCase();
+            if (tag !== 'input' && tag !== 'textarea' && !e.target.isContentEditable) {
+                e.preventDefault(); e.stopPropagation();
+                selecaoDelete?.click();
             }
         }
     });
 
-    // Observer para novos checkboxes (pesquisa/ordenação) - VERSÃO SEM LOOP
-    const observer = new MutationObserver(function (mutations) {
-        // Evitar processamento múltiplo
-        if (processandoObserver) return;
-        processandoObserver = true;
-
-        let temNovosCheckboxes = false;
-
-        mutations.forEach(mutation => {
-            if (mutation.type === 'childList') {
-                mutation.addedNodes.forEach(node => {
-                    if (node.nodeType === 1) { // Elemento
-                        // Verificar se o nó adicionado é um checkbox ou contém checkboxes
-                        if (node.classList && node.classList.contains('item-checkbox-input')) {
-                            temNovosCheckboxes = true;
-                        } else if (node.querySelectorAll) {
-                            if (node.querySelectorAll('.item-checkbox-input').length > 0) {
-                                temNovosCheckboxes = true;
-                            }
-                        }
-                    }
-                });
-            }
-        });
-
-        if (temNovosCheckboxes) {
-            // Configurar apenas os novos checkboxes, sem recriar tudo
-            document.querySelectorAll('.item-checkbox-input').forEach(checkbox => {
-                // Verificar se já tem o evento (forma simples de evitar duplicação)
-                if (!checkbox.hasAttribute('data-event-configurado')) {
-                    configurarCheckbox(checkbox);
-                    checkbox.setAttribute('data-event-configurado', 'true');
-                }
-            });
-        }
-
-        // Liberar flag após um pequeno delay
-        setTimeout(() => {
-            processandoObserver = false;
-        }, 100);
-    });
-
+    // Observer para novos checkboxes (após atualizarLista)
     const container = document.querySelector('.listagem-itens');
     if (container) {
-        observer.observe(container, { childList: true, subtree: true });
+        const obs = new MutationObserver(function (mutations) {
+            if (processandoObserver) return;
+            processandoObserver = true;
+            let temNovos = mutations.some(m => m.type === 'childList' && Array.from(m.addedNodes).some(n =>
+                n.nodeType === 1 && (n.classList?.contains('item-checkbox-input') || n.querySelectorAll?.('.item-checkbox-input').length > 0)
+            ));
+            if (temNovos) {
+                document.querySelectorAll('.item-checkbox-input:not([data-event-ok])').forEach(cb => {
+                    configurarCheckbox(cb);
+                    cb.setAttribute('data-event-ok', 'true');
+                });
+            }
+            setTimeout(() => { processandoObserver = false; }, 100);
+        });
+        obs.observe(container, { childList: true, subtree: true });
     }
 });
 
 // ===== ÍCONES DINÂMICOS (FALLBACK) =====
 document.addEventListener('DOMContentLoaded', function () {
-    // Para ícones que não foram pegos pelo CSS, podemos adicionar lógica JS
+    const iconMap = {
+        'pdf': '📕', 'doc': '📘', 'docx': '📘', 'xls': '📊', 'xlsx': '📊',
+        'ppt': '📽️', 'pptx': '📽️', 'txt': '📃', 'rtf': '📄',
+        'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️', 'gif': '🖼️', 'svg': '🖼️',
+        'mp3': '🎵', 'wav': '🎵', 'ogg': '🎵', 'flac': '🎵',
+        'mp4': '🎬', 'avi': '🎬', 'mkv': '🎬', 'mov': '🎬',
+        'zip': '📦', 'rar': '📦', '7z': '📦', 'tar': '📦', 'gz': '📦',
+        'html': '🌐', 'htm': '🌐', 'css': '🎨', 'js': '⚡', 'py': '🐍',
+        'java': '☕', 'c': '⚙️', 'cpp': '⚙️', 'php': '🐘', 'json': '📋',
+        'exe': '⚙️', 'msi': '⚙️', 'bat': '📜', 'sh': '📜',
+        'sql': '🗄️', 'db': '🗄️', 'sqlite': '🗄️'
+    };
     document.querySelectorAll('.file-icon').forEach(icon => {
-        const extensao = icon.dataset.extensao;
-        if (!extensao) return;
-
-        // Mapeamento de extensões para ícones (fallback)
-        const iconMap = {
-            'pdf': '📕', 'doc': '📘', 'docx': '📘', 'xls': '📊', 'xlsx': '📊',
-            'ppt': '📽️', 'pptx': '📽️', 'txt': '📃', 'rtf': '📄',
-            'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️', 'gif': '🖼️', 'svg': '🖼️',
-            'mp3': '🎵', 'wav': '🎵', 'ogg': '🎵', 'flac': '🎵',
-            'mp4': '🎬', 'avi': '🎬', 'mkv': '🎬', 'mov': '🎬',
-            'zip': '📦', 'rar': '📦', '7z': '📦', 'tar': '📦', 'gz': '📦',
-            'html': '🌐', 'htm': '🌐', 'css': '🎨', 'js': '⚡', 'py': '🐍',
-            'java': '☕', 'c': '⚙️', 'cpp': '⚙️', 'php': '🐘', 'json': '📋',
-            'exe': '⚙️', 'msi': '⚙️', 'bat': '📜', 'sh': '📜',
-            'sql': '🗄️', 'db': '🗄️', 'sqlite': '🗄️'
-        };
-
-        // Se a extensão existir no mapa, substituir o conteúdo
-        if (iconMap[extensao]) {
-            // Só substitui se o ícone atual for o padrão 📄
-            if (icon.textContent === '📄') {
-                icon.textContent = iconMap[extensao];
-            }
-        }
+        const ext = icon.dataset.extensao;
+        if (ext && iconMap[ext] && icon.textContent === '📄') icon.textContent = iconMap[ext];
     });
 });
 
-// ===== SALVAR POSIÇÃO DA ROLAGEM =====
+// ===== SALVAR POSIÇÃO DE ROLAGEM =====
 (function () {
-    // Salvar posição antes de sair da página
-    window.addEventListener('beforeunload', function () {
-        sessionStorage.setItem('scrollPosition', window.scrollY);
-    });
-
-    // Restaurar posição quando a página carregar
+    window.addEventListener('beforeunload', () => sessionStorage.setItem('scrollPosition', window.scrollY));
     window.addEventListener('load', function () {
-        const savedPosition = sessionStorage.getItem('scrollPosition');
-        if (savedPosition) {
-            // Pequeno delay para garantir que a página renderizou
-            setTimeout(function () {
-                window.scrollTo(0, parseInt(savedPosition));
-                sessionStorage.removeItem('scrollPosition'); // Limpar depois de usar
-            }, 100);
-        }
+        const pos = sessionStorage.getItem('scrollPosition');
+        if (pos) { setTimeout(() => { window.scrollTo(0, parseInt(pos)); sessionStorage.removeItem('scrollPosition'); }, 100); }
     });
 })();
 
-// ===== DRAG & DROP E UPLOAD =====
+// ===== DRAG & DROP =====
 document.addEventListener('DOMContentLoaded', function () {
     const overlay = document.getElementById('global-drop-overlay');
     let dragCounter = 0;
 
-    // Detecta entrada de arquivos para drag & drop
     document.addEventListener('dragenter', (e) => {
-        if (e.dataTransfer.types && e.dataTransfer.types.includes('Files')) {
-            dragCounter++;
-            if (overlay) overlay.classList.add('active');
-        }
+        if (e.dataTransfer.types?.includes('Files')) { dragCounter++; overlay?.classList.add('active'); }
     });
-
-    document.addEventListener('dragleave', (e) => {
-        dragCounter--;
-        if (dragCounter <= 0 && overlay) {
-            overlay.classList.remove('active');
-        }
-    });
-
-    document.addEventListener('dragover', (e) => {
-        e.preventDefault();
-    });
-
+    document.addEventListener('dragleave', () => { dragCounter--; if (dragCounter <= 0 && overlay) overlay.classList.remove('active'); });
+    document.addEventListener('dragover', (e) => e.preventDefault());
     document.addEventListener('drop', (e) => {
         e.preventDefault();
-        if (overlay) overlay.classList.remove('active');
+        overlay?.classList.remove('active');
         dragCounter = 0;
-
         const files = e.dataTransfer.files;
-        // Usar a função global de upload definida no main.js
-        if (files && files.length > 0 && typeof window.uploadFiles === 'function') {
-            window.uploadFiles(files);
-        }
+        if (files?.length > 0 && typeof window.uploadFiles === 'function') window.uploadFiles(files);
     });
 });
 
 // ===== AUDIO PLAYER MODAL =====
 (function () {
-    // Aguardar o DOM carregar
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initAudioModal);
-    } else {
-        initAudioModal();
-    }
-
     function initAudioModal() {
-        const audioModal = document.getElementById('audioModal');
-        const audioPlayer = document.getElementById('audioPlayer');
-        const audioSource = document.getElementById('audioSource');
-        const audioModalTitle = document.getElementById('audioModalTitle');
-        const audioModalInfo = document.getElementById('audioModalInfo');
+        const audioModal       = document.getElementById('audioModal');
+        const audioPlayer      = document.getElementById('audioPlayer');
+        const audioSource      = document.getElementById('audioSource');
+        const audioModalTitle  = document.getElementById('audioModalTitle');
+        const audioModalInfo   = document.getElementById('audioModalInfo');
         const audioModalDownload = document.getElementById('audioModalDownload');
         const audioModalDelete = document.getElementById('audioModalDelete');
-        const audioModalClose = document.getElementById('audioModalClose');
-        const audioDuration = document.getElementById('audioDuration');
+        const audioModalClose  = document.getElementById('audioModalClose');
+        const audioDuration    = document.getElementById('audioDuration');
 
-        if (!audioModal) {
-            console.error('Audio modal não encontrado!');
-            return;
-        }
+        if (!audioModal) return;
 
         let currentAudioDeleteForm = null;
-        let shouldReload = false;
 
-        // Função para fechar o modal e recarregar a página
         function closeAudioModalAndReload() {
-            console.log('Fechando modal de áudio e recarregando página...');
-
-            // Parar o áudio
-            if (audioPlayer) {
-                audioPlayer.pause();
-                audioPlayer.currentTime = 0;
-            }
-
-            // Fechar o modal
+            audioPlayer?.pause();
+            if (audioPlayer) audioPlayer.currentTime = 0;
             audioModal.style.display = 'none';
             document.body.style.overflow = '';
-
-            // Recarregar a página após um pequeno delay
-            setTimeout(() => {
-                window.location.reload();
-            }, 100);
+            setTimeout(() => window.location.reload(), 100);
         }
 
-        // Função para fechar o modal sem recarregar (usado apenas para exclusão)
         function closeAudioModalOnly() {
-            console.log('Fechando modal de áudio sem recarregar');
             audioModal.style.display = 'none';
             document.body.style.overflow = '';
-            if (audioPlayer) {
-                audioPlayer.pause();
-                audioPlayer.currentTime = 0;
-            }
+            audioPlayer?.pause();
+            if (audioPlayer) audioPlayer.currentTime = 0;
         }
 
-        // Função para abrir o modal
         window.openAudioModal = function (audioUrl, audioName, downloadUrl, deleteForm) {
-            console.log('Abrindo modal de áudio:', audioName);
-
             currentAudioDeleteForm = deleteForm;
-
-            // Resetar completamente o player
-            if (audioPlayer) {
-                audioPlayer.pause();
-                audioPlayer.currentTime = 0;
-            }
-
-            // Configurar nova fonte
+            audioPlayer?.pause();
+            if (audioPlayer) audioPlayer.currentTime = 0;
             if (audioSource) audioSource.src = audioUrl;
-            if (audioPlayer) audioPlayer.load();
-
-            // Resetar duração
+            audioPlayer?.load();
             if (audioDuration) audioDuration.textContent = '';
-
-            // Configurar título e info
             if (audioModalTitle) audioModalTitle.textContent = audioName;
             if (audioModalInfo) audioModalInfo.textContent = 'Áudio';
-
-            // Configurar botão de download
             if (audioModalDownload) audioModalDownload.href = downloadUrl;
 
-            // Configurar botão de excluir
             const handleDelete = async function (e) {
                 e.preventDefault();
                 const confirmado = await ConfirmModal.open({
@@ -1134,133 +648,70 @@ document.addEventListener('DOMContentLoaded', function () {
                     message: `Tem certeza que deseja excluir o áudio "${audioName}"?`,
                     detail: 'Esta ação não pode ser desfeita.'
                 });
-
                 if (confirmado && currentAudioDeleteForm) {
                     showToast(`Excluindo ${audioName}...`, 'info', 2000);
-
-                    // Fechar o modal primeiro (sem recarregar)
                     closeAudioModalOnly();
-
                     const form = currentAudioDeleteForm.cloneNode(true);
                     document.body.appendChild(form);
                     form.submit();
-
-                    // A exclusão vai recarregar a página automaticamente
                 }
             };
 
-            // Remover eventos antigos e adicionar novo
             if (audioModalDelete) {
-                const newDeleteBtn = audioModalDelete.cloneNode(true);
-                audioModalDelete.parentNode.replaceChild(newDeleteBtn, audioModalDelete);
-                newDeleteBtn.addEventListener('click', handleDelete);
+                const newBtn = audioModalDelete.cloneNode(true);
+                audioModalDelete.parentNode.replaceChild(newBtn, audioModalDelete);
+                newBtn.addEventListener('click', handleDelete);
             }
 
-            // Atualizar duração quando carregar
             if (audioPlayer) {
                 const updateDuration = function () {
-                    const duration = audioPlayer.duration;
-                    if (!isNaN(duration) && duration > 0) {
-                        const minutes = Math.floor(duration / 60);
-                        const seconds = Math.floor(duration % 60);
-                        if (audioDuration) {
-                            audioDuration.textContent = `Duração: ${minutes}:${seconds.toString().padStart(2, '0')}`;
-                        }
+                    const dur = audioPlayer.duration;
+                    if (!isNaN(dur) && dur > 0) {
+                        const m = Math.floor(dur / 60), s = Math.floor(dur % 60);
+                        if (audioDuration) audioDuration.textContent = `Duração: ${m}:${s.toString().padStart(2, '0')}`;
                         audioPlayer.removeEventListener('loadedmetadata', updateDuration);
                     }
                 };
                 audioPlayer.addEventListener('loadedmetadata', updateDuration);
             }
 
-            // Abrir modal
             audioModal.style.display = 'flex';
             document.body.style.overflow = 'hidden';
-
-            // Tentar reproduzir
-            if (audioPlayer) {
-                audioPlayer.play().catch(e => console.log('Autoplay bloqueado:', e));
-            }
+            audioPlayer?.play().catch(() => {});
         };
 
-        // Eventos de fechamento - TODOS recarregam a página
-        if (audioModalClose) {
-            audioModalClose.onclick = closeAudioModalAndReload;
-        }
-
-        if (audioModal) {
-            audioModal.onclick = function (e) {
-                if (e.target === audioModal) {
-                    closeAudioModalAndReload();
-                }
-            };
-        }
-
-        // Fechar com ESC também recarrega
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape' && audioModal.style.display === 'flex') {
-                closeAudioModalAndReload();
-            }
-        });
+        if (audioModalClose) audioModalClose.onclick = closeAudioModalAndReload;
+        if (audioModal) audioModal.onclick = (e) => { if (e.target === audioModal) closeAudioModalAndReload(); };
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && audioModal.style.display === 'flex') closeAudioModalAndReload(); });
     }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAudioModal);
+    else initAudioModal();
 })();
 
-// ===== FUNÇÃO PARA FECHAR O PAINEL DE UPLOAD =====
+// ===== FECHAR PAINEL DE UPLOAD =====
 function fecharPainel() {
     const panel = document.getElementById('upload-panel');
-    if (panel) {
-        panel.style.display = 'none';
-    }
+    if (panel) panel.style.display = 'none';
 }
 
-// ===== FUNÇÃO PARA ATUALIZAR A LISTA DE ARQUIVOS =====
+// ===== ATUALIZAR LISTA DE ARQUIVOS (AJAX) =====
 async function atualizarLista() {
     const container = document.getElementById('file-list-container');
     if (!container) return;
-
-    const caminho = window.location.pathname.replace('/explorar', '');
+    const caminho = window.location.pathname.replace(/^\/explorar/, '') || '/';
     try {
         const response = await fetch(`/partial/lista${caminho}`);
         if (response.ok) {
-            const html = await response.text();
-            container.innerHTML = html;
+            container.innerHTML = await response.text();
             showToast('📂 Lista atualizada!', 'info', 2000);
         }
-    } catch (error) {
-        console.error('Erro ao atualizar lista:', error);
-    }
+    } catch (error) {}
 }
 
-// ===== ATALHOS DE TECLADO =====
+// ===== ATALHOS DE NAVEGAÇÃO =====
 document.addEventListener('keydown', function (e) {
-
-    // Alt + ← (seta esquerda) - Voltar para pasta anterior
-    if (e.altKey && e.key === 'ArrowLeft') {
-        e.preventDefault();
-        const backBtn = document.querySelector('.back-btn');
-        if (backBtn) {
-            console.log('Atalho Alt+← acionado - voltando');
-            backBtn.click();
-        } else {
-            // Se não tem botão voltar, tenta voltar no histórico do navegador
-            window.history.back();
-        }
-    }
-
-    // Alt + → (seta direita) - Avançar (se houver histórico)
-    if (e.altKey && e.key === 'ArrowRight') {
-        e.preventDefault();
-        console.log('Atalho Alt+→ acionado - avançando');
-        window.history.forward();
-    }
-
-    // Ctrl + Z para voltar (alternativa)
-    if (e.ctrlKey && e.key === 'z') {
-        e.preventDefault();
-        const backBtn = document.querySelector('.back-btn');
-        if (backBtn) {
-            backBtn.click();
-        } else {
-            window.history.back();
-        }
-    }
+    if (e.altKey && e.key === 'ArrowLeft') { e.preventDefault(); document.querySelector('.back-btn')?.click() || window.history.back(); }
+    if (e.altKey && e.key === 'ArrowRight') { e.preventDefault(); window.history.forward(); }
+    if (e.ctrlKey && e.key === 'z') { e.preventDefault(); document.querySelector('.back-btn')?.click() || window.history.back(); }
 });

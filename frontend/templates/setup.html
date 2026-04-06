@@ -13,9 +13,7 @@
             try {
                 const savedTheme = localStorage.getItem('theme') || 'light';
                 document.documentElement.setAttribute('data-theme', savedTheme);
-            } catch (e) {
-                console.log('Erro ao acessar localStorage:', e);
-            }
+            } catch (e) {}
         })();
     </script>
 
@@ -49,52 +47,75 @@
             {% endif %}
             {% endwith %}
 
-            <form method="POST" class="login-form" id="setup-form">
+            <form method="POST" class="login-form" id="setup-form" autocomplete="off">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
                 <div class="form-group">
                     <label for="nome" class="form-label">👤 Nome completo</label>
-                    <input type="text" name="nome" id="nome" class="form-input" placeholder="Seu nome completo"
-                        autofocus>
+                    <input type="text" name="nome" id="nome" class="form-input"
+                        placeholder="Seu nome completo" autofocus autocomplete="name">
                     <div class="form-error" id="nome-error"></div>
                     <span class="form-small">Como você quer ser chamado</span>
                 </div>
 
                 <div class="form-group">
                     <label for="username" class="form-label">🔑 Nome de usuário (login)</label>
-                    <input type="text" name="username" id="username" class="form-input" placeholder="usuario">
+                    <input type="text" name="username" id="username" class="form-input"
+                        placeholder="usuario" autocomplete="username">
                     <div class="form-error" id="username-error"></div>
-                    <span class="form-small">Será usado para fazer login</span>
+                    <span class="form-small">Letras, números, _ . - (mínimo 3 caracteres)</span>
                 </div>
 
                 <div class="form-group">
                     <label for="password" class="form-label">🔒 Senha</label>
                     <input type="password" name="password" id="password" class="form-input"
-                        placeholder="Digite uma senha segura">
+                        placeholder="Digite uma senha segura" autocomplete="new-password">
                     <div class="form-error" id="password-error"></div>
-                    <span class="form-small">Mínimo 6 caracteres</span>
+
+                    <!-- Indicador visual de força da senha -->
+                    <div id="password-strength" style="margin-top: 8px; display: none;">
+                        <div style="display: flex; gap: 4px; margin-bottom: 6px;">
+                            <div class="strength-bar" id="bar-1" style="height:4px; flex:1; border-radius:2px; background: var(--border);"></div>
+                            <div class="strength-bar" id="bar-2" style="height:4px; flex:1; border-radius:2px; background: var(--border);"></div>
+                            <div class="strength-bar" id="bar-3" style="height:4px; flex:1; border-radius:2px; background: var(--border);"></div>
+                            <div class="strength-bar" id="bar-4" style="height:4px; flex:1; border-radius:2px; background: var(--border);"></div>
+                        </div>
+                        <ul id="password-rules" style="font-size:0.75rem; color: var(--text-secondary); padding-left: 16px; margin: 0;">
+                            <li id="rule-len" style="color: var(--text-secondary);">Mínimo 12 caracteres</li>
+                            <li id="rule-upper" style="color: var(--text-secondary);">Uma letra maiúscula</li>
+                            <li id="rule-lower" style="color: var(--text-secondary);">Uma letra minúscula</li>
+                            <li id="rule-num" style="color: var(--text-secondary);">Um número</li>
+                            <li id="rule-special" style="color: var(--text-secondary);">Um caractere especial (!@#$%...)</li>
+                        </ul>
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label for="confirm_password" class="form-label">✓ Confirmar senha</label>
                     <input type="password" name="confirm_password" id="confirm_password" class="form-input"
-                        placeholder="Digite a senha novamente">
+                        placeholder="Digite a senha novamente" autocomplete="new-password">
                     <div class="form-error" id="confirm-error"></div>
                 </div>
 
                 <div class="form-group">
                     <label for="repo_path" class="form-label">📁 Pasta do repositório</label>
                     <input type="text" name="repo_path" id="repo_path" class="form-input"
-                        placeholder="C:\Users\SeuUsuario\MeusArquivos">
+                        placeholder="/storage/emulated/0/MeuDrive">
                     <div class="form-error" id="repo-error"></div>
-                    <span class="form-small">💡 Use o formato do Windows: C:\Users\SeuUsuario\Pasta</span>
+                    <span class="form-small">
+                        💡 Termux: <code>/storage/emulated/0/SuaPasta</code><br>
+                        💡 Linux: <code>/home/usuario/arquivos</code>
+                    </span>
                 </div>
 
-                <button type="submit" class="btn-primary">
+                <button type="submit" class="btn-primary" id="submit-btn">
                     🚀 Criar conta e começar
                 </button>
             </form>
 
             <div class="form-card-footer" style="text-align: center; margin-top: 24px;">
-                <p style="font-size: 0.75rem; color: var(--text-secondary);">Esta configuração será feita apenas uma vez
+                <p style="font-size: 0.75rem; color: var(--text-secondary);">
+                    Esta configuração será feita apenas uma vez
                 </p>
             </div>
         </div>
@@ -107,113 +128,109 @@
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
     <script>
-        // Validação inline no setup
-        const setupForm = document.getElementById('setup-form');
-        const usernameInput = document.getElementById('username');
-        const passwordInput = document.getElementById('password');
-        const confirmInput = document.getElementById('confirm_password');
-        const repoPathInput = document.getElementById('repo_path');
+    document.addEventListener('DOMContentLoaded', function () {
+        const setupForm      = document.getElementById('setup-form');
+        const usernameInput  = document.getElementById('username');
+        const passwordInput  = document.getElementById('password');
+        const confirmInput   = document.getElementById('confirm_password');
+        const repoPathInput  = document.getElementById('repo_path');
 
-        const usernameError = document.getElementById('username-error');
-        const passwordError = document.getElementById('password-error');
-        const confirmError = document.getElementById('confirm-error');
-        const repoError = document.getElementById('repo-error');
+        const usernameError  = document.getElementById('username-error');
+        const passwordError  = document.getElementById('password-error');
+        const confirmError   = document.getElementById('confirm-error');
+        const repoError      = document.getElementById('repo-error');
 
-        function showError(element, errorDiv, message) {
-            element.classList.add('error');
-            errorDiv.textContent = message;
+        // ===== HELPERS =====
+        function showError(input, errorDiv, msg) {
+            input.classList.add('error');
+            errorDiv.textContent = msg;
             errorDiv.style.display = 'block';
         }
 
-        function clearError(element, errorDiv) {
-            element.classList.remove('error');
+        function clearError(input, errorDiv) {
+            input.classList.remove('error');
             errorDiv.textContent = '';
             errorDiv.style.display = 'none';
         }
 
-        function validateSetupForm() {
-            let isValid = true;
-
-            if (!usernameInput.value.trim()) {
-                showError(usernameInput, usernameError, 'Digite um nome de usuário');
-                isValid = false;
-            } else if (usernameInput.value.trim().length < 3) {
-                showError(usernameInput, usernameError, 'Nome de usuário deve ter pelo menos 3 caracteres');
-                isValid = false;
-            } else {
-                clearError(usernameInput, usernameError);
-            }
-
-            if (!passwordInput.value) {
-                showError(passwordInput, passwordError, 'Digite uma senha');
-                isValid = false;
-            } else if (passwordInput.value.length < 6) {
-                showError(passwordInput, passwordError, 'A senha deve ter pelo menos 6 caracteres');
-                isValid = false;
-            } else {
-                clearError(passwordInput, passwordError);
-            }
-
-            if (passwordInput.value && confirmInput.value !== passwordInput.value) {
-                showError(confirmInput, confirmError, 'As senhas não coincidem');
-                isValid = false;
-            } else if (confirmInput.value && passwordInput.value) {
-                clearError(confirmInput, confirmError);
-            }
-
-            if (!repoPathInput.value.trim()) {
-                showError(repoPathInput, repoError, 'Digite o caminho da pasta do repositório');
-                isValid = false;
-            } else {
-                clearError(repoPathInput, repoError);
-            }
-
-            return isValid;
+        // ===== VALIDAÇÃO DE SENHA (espelha o backend) =====
+        function checkPassword(senha) {
+            return {
+                len:     senha.length >= 12,
+                upper:   /[A-Z]/.test(senha),
+                lower:   /[a-z]/.test(senha),
+                num:     /\d/.test(senha),
+                special: /[^A-Za-z0-9]/.test(senha),
+            };
         }
 
+        function updateStrengthUI(senha) {
+            const el = document.getElementById('password-strength');
+            if (!senha) { el.style.display = 'none'; return; }
+            el.style.display = 'block';
+
+            const r = checkPassword(senha);
+            const rules = { 'rule-len': r.len, 'rule-upper': r.upper, 'rule-lower': r.lower, 'rule-num': r.num, 'rule-special': r.special };
+            Object.entries(rules).forEach(([id, ok]) => {
+                document.getElementById(id).style.color = ok ? '#22c55e' : 'var(--text-secondary)';
+            });
+
+            const score = Object.values(r).filter(Boolean).length;
+            const colors = ['', '#ef4444', '#f97316', '#eab308', '#22c55e'];
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById('bar-' + i).style.background =
+                    i <= score ? colors[score] : 'var(--border)';
+            }
+        }
+
+        // ===== VALIDAÇÕES INDIVIDUAIS =====
+        function validateUsername() {
+            const v = usernameInput.value.trim();
+            if (!v) { showError(usernameInput, usernameError, 'Digite um nome de usuário'); return false; }
+            if (v.length < 3) { showError(usernameInput, usernameError, 'Mínimo 3 caracteres'); return false; }
+            if (!/^[a-zA-Z0-9_.\-]+$/.test(v)) { showError(usernameInput, usernameError, 'Apenas letras, números, _ . -'); return false; }
+            clearError(usernameInput, usernameError);
+            return true;
+        }
+
+        function validatePassword() {
+            const senha = passwordInput.value;
+            if (!senha) { showError(passwordInput, passwordError, 'Digite uma senha'); return false; }
+            const r = checkPassword(senha);
+            if (!r.len)     { showError(passwordInput, passwordError, 'Mínimo 12 caracteres'); return false; }
+            if (!r.upper)   { showError(passwordInput, passwordError, 'Adicione uma letra maiúscula'); return false; }
+            if (!r.lower)   { showError(passwordInput, passwordError, 'Adicione uma letra minúscula'); return false; }
+            if (!r.num)     { showError(passwordInput, passwordError, 'Adicione um número'); return false; }
+            if (!r.special) { showError(passwordInput, passwordError, 'Adicione um caractere especial'); return false; }
+            clearError(passwordInput, passwordError);
+            return true;
+        }
+
+        function validateConfirm() {
+            if (!confirmInput.value) { showError(confirmInput, confirmError, 'Confirme a senha'); return false; }
+            if (confirmInput.value !== passwordInput.value) { showError(confirmInput, confirmError, 'As senhas não coincidem'); return false; }
+            clearError(confirmInput, confirmError);
+            return true;
+        }
+
+        function validateRepo() {
+            const v = repoPathInput.value.trim();
+            if (!v) { showError(repoPathInput, repoError, 'Digite o caminho da pasta'); return false; }
+            clearError(repoPathInput, repoError);
+            return true;
+        }
+
+        // ===== EVENTOS =====
+        usernameInput.addEventListener('input', validateUsername);
+        passwordInput.addEventListener('input', () => { updateStrengthUI(passwordInput.value); validatePassword(); if (confirmInput.value) validateConfirm(); });
+        confirmInput.addEventListener('input', validateConfirm);
+        repoPathInput.addEventListener('input', validateRepo);
+
         setupForm.addEventListener('submit', function (e) {
-            if (!validateSetupForm()) {
-                e.preventDefault();
-            }
+            const ok = [validateUsername(), validatePassword(), validateConfirm(), validateRepo()].every(Boolean);
+            if (!ok) e.preventDefault();
         });
-
-        usernameInput.addEventListener('input', function () {
-            if (usernameInput.value.trim()) {
-                clearError(usernameInput, usernameError);
-            }
-        });
-
-        passwordInput.addEventListener('input', function () {
-            if (passwordInput.value && passwordInput.value.length >= 6) {
-                clearError(passwordInput, passwordError);
-            } else if (passwordInput.value && passwordInput.value.length < 6) {
-                showError(passwordInput, passwordError, 'A senha deve ter pelo menos 6 caracteres');
-            } else if (!passwordInput.value) {
-                showError(passwordInput, passwordError, 'Digite uma senha');
-            }
-
-            if (confirmInput.value) {
-                if (confirmInput.value !== passwordInput.value) {
-                    showError(confirmInput, confirmError, 'As senhas não coincidem');
-                } else {
-                    clearError(confirmInput, confirmError);
-                }
-            }
-        });
-
-        confirmInput.addEventListener('input', function () {
-            if (confirmInput.value !== passwordInput.value) {
-                showError(confirmInput, confirmError, 'As senhas não coincidem');
-            } else {
-                clearError(confirmInput, confirmError);
-            }
-        });
-
-        repoPathInput.addEventListener('input', function () {
-            if (repoPathInput.value.trim()) {
-                clearError(repoPathInput, repoError);
-            }
-        });
+    }); // fim DOMContentLoaded
     </script>
 </body>
 
