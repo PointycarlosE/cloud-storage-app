@@ -65,13 +65,32 @@ document.addEventListener('DOMContentLoaded', function () {
 
         lightbox.classList.add('active');
         document.body.style.overflow = 'hidden';
+
+        // Empurra um estado falso no histórico para capturar o botão voltar do celular
+        if (!history.state?.lightboxOpen) {
+            history.pushState({ lightboxOpen: true }, '');
+        }
     }
 
     function closeLightbox() {
         lightbox.classList.remove('active');
         lightboxImage.src = '';
         document.body.style.overflow = '';
+
+        // Descarta o estado falso que empurramos ao abrir
+        if (history.state?.lightboxOpen) {
+            history.back();
+        }
     }
+
+    // Intercepta o botão "voltar" do celular (e Alt+Seta no desktop)
+    window.addEventListener('popstate', function (e) {
+        if (lightbox.classList.contains('active')) {
+            lightbox.classList.remove('active');
+            lightboxImage.src = '';
+            document.body.style.overflow = '';
+        }
+    });
 
     function prevImage() {
         if (images.length > 0) { currentImageIndex = (currentImageIndex - 1 + images.length) % images.length; openLightbox(currentImageIndex); }
@@ -346,17 +365,14 @@ document.addEventListener('DOMContentLoaded', function () {
         
         if (selecaoBarra) {
             if (count > 0) {
-                // Garante que o display seja flex antes da animação
                 if (selecaoBarra.style.display === 'none') {
                     selecaoBarra.style.display = 'flex';
                 }
-                // Pequeno delay para disparar a transição CSS
                 requestAnimationFrame(() => {
                     selecaoBarra.classList.add('active');
                 });
             } else {
                 selecaoBarra.classList.remove('active');
-                // Espera a transição de 0.4s do CSS terminar antes de ocultar
                 setTimeout(() => {
                     if (itensSelecionados.size === 0) {
                         selecaoBarra.style.display = 'none';
@@ -401,7 +417,7 @@ document.addEventListener('DOMContentLoaded', function () {
         atualizarSelecao();
     });
 
-    // Limpar seleção ao atualizar lista (opcional, mas evita bugs de itens que sumiram)
+    // Limpar seleção ao atualizar lista
     document.addEventListener('listaAtualizada', () => {
         itensSelecionados.clear();
         atualizarSelecao();
@@ -444,7 +460,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else {
                     showToast(`✅ ${resultado.excluidos} itens excluídos com sucesso!`, 'success');
                 }
-                // Em vez de reload, atualiza a lista via AJAX
                 if (typeof atualizarLista === 'function') atualizarLista();
             } else {
                 showToast(`Erro: ${resultado.erro}`, 'error');
@@ -538,7 +553,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const overlay = document.getElementById('global-drop-overlay');
     let dragCounter = 0;
 
-    // ✅ DETECÇÃO DE DRAG INTERNO: Bloqueia o overlay se o drag começou dentro da página
     document.addEventListener('dragstart', () => {
         isInternalDrag = true;
     });
@@ -550,10 +564,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.addEventListener('dragenter', (e) => {
-        // Se o drag começou dentro da página, ignora
         if (isInternalDrag) return;
-
-        // Verifica se o que está sendo arrastado são arquivos externos
         if (e.dataTransfer.types?.includes('Files')) {
             dragCounter++;
             overlay?.classList.add('active');
@@ -562,8 +573,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.addEventListener('dragleave', (e) => {
         if (isInternalDrag) return;
-
-        // Apenas decrementa se estiver saindo de um elemento real (evita bugs com elementos filhos)
         if (e.relatedTarget === null || !document.body.contains(e.relatedTarget)) {
             dragCounter = 0;
         } else {
@@ -578,7 +587,6 @@ document.addEventListener('DOMContentLoaded', function () {
             e.dataTransfer.dropEffect = 'none';
             return;
         }
-        // Garante que o cursor mostre que é um upload de arquivos
         if (e.dataTransfer.types?.includes('Files')) {
             e.dataTransfer.dropEffect = 'copy';
         }
@@ -594,7 +602,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Importante: verifica se existem arquivos reais no drop
         const files = e.dataTransfer.files;
         if (files && files.length > 0) {
             if (typeof window.uploadFiles === 'function') {
@@ -626,7 +633,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (audioPlayer) audioPlayer.currentTime = 0;
             audioModal.style.display = 'none';
             document.body.style.overflow = '';
-            // Em vez de reload, apenas atualiza a lista se necessário
             if (typeof atualizarLista === 'function') atualizarLista();
         }
 
@@ -712,8 +718,6 @@ async function atualizarLista() {
         if (response.ok) {
             container.innerHTML = await response.text();
             showToast('📂 Lista atualizada!', 'info', 2000);
-
-            // Dispara evento customizado para que outros scripts saibam que a lista mudou
             document.dispatchEvent(new CustomEvent('listaAtualizada'));
         }
     } catch (error) {
