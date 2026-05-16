@@ -31,7 +31,6 @@ def caminho_seguro(caminho_relativo: str) -> str | None:
     try:
         caminho_abs = os.path.abspath(os.path.join(PASTA_BASE, caminho_relativo))
         pasta_base_abs = os.path.abspath(PASTA_BASE)
-        # commonpath levanta ValueError se os paths estiverem em drives diferentes (Windows)
         if os.path.commonpath([pasta_base_abs, caminho_abs]) != pasta_base_abs:
             return None
         return caminho_abs
@@ -40,7 +39,6 @@ def caminho_seguro(caminho_relativo: str) -> str | None:
 
 
 # ===== EXTENSÕES BLOQUEADAS NO UPLOAD =====
-# Arquivos executáveis e de script não devem ser enviados
 EXTENSOES_BLOQUEADAS = {
     '.php', '.php3', '.php4', '.php5', '.phtml',  # PHP
     '.sh', '.bash', '.zsh', '.fish',               # Shell
@@ -56,6 +54,37 @@ EXTENSOES_BLOQUEADAS = {
 def extensao_bloqueada(nome_arquivo: str) -> bool:
     _, ext = os.path.splitext(nome_arquivo.lower())
     return ext in EXTENSOES_BLOQUEADAS
+
+
+# ===== HELPER: CLASSIFICAR ITENS =====
+EXTENSOES_IMAGENS = ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp')
+EXTENSOES_AUDIO = ('.mp3', '.wav', '.ogg', '.m4a', '.flac')
+EXTENSOES_PDF = ('.pdf',)
+
+
+def classificar_itens(pasta_atual):
+    """Classifica os itens de uma pasta em categorias."""
+    pastas, arquivos, imagens, audios, pdfs = [], [], [], [], []
+
+    for item in os.listdir(pasta_atual):
+        caminho_item = os.path.join(pasta_atual, item)
+        item_info = get_info_arquivo(caminho_item, item)
+
+        if os.path.isdir(caminho_item):
+            item_info['tamanho_formatado'] = '--'
+            pastas.append(item_info)
+        else:
+            nome_lower = item.lower()
+            if nome_lower.endswith(EXTENSOES_IMAGENS):
+                imagens.append(item_info)
+            elif nome_lower.endswith(EXTENSOES_AUDIO):
+                audios.append(item_info)
+            elif nome_lower.endswith(EXTENSOES_PDF):
+                pdfs.append(item_info)
+            else:
+                arquivos.append(item_info)
+
+    return pastas, arquivos, imagens, audios, pdfs
 
 
 # ===== EXPLORADOR =====
@@ -76,27 +105,7 @@ def explorar(caminho=""):
         if not os.path.isdir(pasta_atual):
             return render_template("erro.html", mensagem="O caminho não é uma pasta."), 400
 
-        itens = os.listdir(pasta_atual)
-        pastas, arquivos, imagens, audios = [], [], [], []
-
-        extensoes_imagens = ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp')
-        extensoes_audio = ('.mp3', '.wav', '.ogg', '.m4a', '.flac')
-
-        for item in itens:
-            caminho_item = os.path.join(pasta_atual, item)
-            item_info = get_info_arquivo(caminho_item, item)
-
-            if os.path.isdir(caminho_item):
-                item_info['tamanho_formatado'] = '--'
-                pastas.append(item_info)
-            else:
-                nome_lower = item.lower()
-                if nome_lower.endswith(extensoes_imagens):
-                    imagens.append(item_info)
-                elif nome_lower.endswith(extensoes_audio):
-                    audios.append(item_info)
-                else:
-                    arquivos.append(item_info)
+        pastas, arquivos, imagens, audios, pdfs = classificar_itens(pasta_atual)
 
         pasta_pai = os.path.dirname(caminho) if caminho else None
 
@@ -114,6 +123,7 @@ def explorar(caminho=""):
             arquivos=arquivos,
             imagens=imagens,
             audios=audios,
+            pdfs=pdfs,
             caminho=caminho,
             caminho_atual=caminho,
             pasta_pai=pasta_pai,
@@ -140,27 +150,7 @@ def lista_parcial(caminho=""):
     if not os.path.exists(pasta_atual) or not os.path.isdir(pasta_atual):
         abort(404)
 
-    itens = os.listdir(pasta_atual)
-    pastas, arquivos, imagens, audios = [], [], [], []
-
-    extensoes_imagens = ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp')
-    extensoes_audio = ('.mp3', '.wav', '.ogg', '.m4a', '.flac')
-
-    for item in itens:
-        caminho_item = os.path.join(pasta_atual, item)
-        item_info = get_info_arquivo(caminho_item, item)
-
-        if os.path.isdir(caminho_item):
-            item_info['tamanho_formatado'] = '--'
-            pastas.append(item_info)
-        else:
-            nome_lower = item.lower()
-            if nome_lower.endswith(extensoes_imagens):
-                imagens.append(item_info)
-            elif nome_lower.endswith(extensoes_audio):
-                audios.append(item_info)
-            else:
-                arquivos.append(item_info)
+    pastas, arquivos, imagens, audios, pdfs = classificar_itens(pasta_atual)
 
     return render_template(
         'partials/_lista_arquivos.html',
@@ -168,6 +158,7 @@ def lista_parcial(caminho=""):
         arquivos=arquivos,
         imagens=imagens,
         audios=audios,
+        pdfs=pdfs,
         caminho=caminho
     )
 
@@ -248,7 +239,6 @@ def upload(caminho):
 
         caminho_final = os.path.join(pasta_destino, nome_seguro)
 
-        # Evitar sobrescrever arquivos existentes
         contador = 1
         nome_base, extensao = os.path.splitext(nome_seguro)
         while os.path.exists(caminho_final):
@@ -286,7 +276,6 @@ def criar_pasta(caminho):
 
     nova_pasta = os.path.join(pasta_atual, nome_seguro)
 
-    # Verificar que a nova pasta ainda está dentro da base
     if caminho_seguro(os.path.relpath(nova_pasta, PASTA_BASE)) is None:
         abort(403)
 
@@ -363,7 +352,6 @@ def deletar_multiplos():
 
         caminhos = dados.get('caminhos', [])
 
-        # Limite de itens por requisição
         if not caminhos:
             return {'sucesso': False, 'erro': 'Nenhum item selecionado'}, 400
         if len(caminhos) > 500:
@@ -419,7 +407,6 @@ def download_zip():
     if not caminhos:
         return "Nenhum arquivo selecionado", 400
 
-    # Limite de quantidade de arquivos no ZIP
     if len(caminhos) > MAX_ZIP_FILES:
         log_zip_bloqueado(usuario, f"muitos arquivos: {len(caminhos)} > {MAX_ZIP_FILES}")
         return f"Máximo de {MAX_ZIP_FILES} itens por ZIP", 400
@@ -475,7 +462,6 @@ def download_zip():
     except Exception:
         return "Erro ao criar ZIP", 500
     finally:
-        # Tentar deletar o arquivo temporário após o envio
         if temp_zip and os.path.exists(temp_zip.name):
             try:
                 os.unlink(temp_zip.name)

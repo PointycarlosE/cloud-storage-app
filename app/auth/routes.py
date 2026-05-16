@@ -7,7 +7,7 @@ from flask import (
     flash, Blueprint, session
 )
 from flask_login import login_user, logout_user, login_required, current_user
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import timedelta
 from urllib.parse import urlparse
 
@@ -26,10 +26,6 @@ auth_bp = Blueprint('auth', __name__)
 
 # ===== VALIDAÇÃO DE SENHA FORTE =====
 def validar_senha(senha: str) -> tuple[bool, str]:
-    """
-    Retorna (True, '') se a senha for forte o suficiente.
-    Retorna (False, 'motivo') se não for.
-    """
     if len(senha) < 12:
         return False, 'A senha deve ter pelo menos 12 caracteres'
     if not re.search(r'[A-Z]', senha):
@@ -45,21 +41,45 @@ def validar_senha(senha: str) -> tuple[bool, str]:
 
 # ===== VALIDAÇÃO DE REDIRECT SEGURO =====
 def is_safe_redirect(url: str) -> bool:
-    """
-    Verifica se a URL de redirecionamento é segura (mesma origem).
-    Previne open redirect attacks.
-    """
     if not url:
         return False
     parsed = urlparse(url)
-    # URL segura: sem scheme e sem netloc (é relativa ao mesmo servidor)
     return not parsed.scheme and not parsed.netloc
+
+
+# ===== HELPER: REESCREVER .env =====
+def atualizar_env(chave: str, valor: str):
+    """Atualiza ou adiciona uma chave no arquivo .env."""
+    env_path = os.path.join(ROOT_DIR, 'instance', '.env')
+
+    if os.path.exists(env_path):
+        with open(env_path, 'r', encoding='utf-8') as f:
+            linhas = f.readlines()
+    else:
+        linhas = []
+
+    nova_linha = f'{chave}={valor}\n'
+    encontrou = False
+
+    for i, linha in enumerate(linhas):
+        if linha.startswith(f'{chave}='):
+            linhas[i] = nova_linha
+            encontrou = True
+            break
+
+    if not encontrou:
+        linhas.append(nova_linha)
+
+    with open(env_path, 'w', encoding='utf-8') as f:
+        f.writelines(linhas)
+
+    # Atualiza o ambiente em memória para a sessão atual
+    os.environ[chave] = valor
 
 
 # ===== LOGIN =====
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    """Página de login com rate limiting via flask-limiter (em __init__.py)."""
     if current_user.is_authenticated:
         return redirect(url_for('file.explorar'))
 
@@ -72,13 +92,9 @@ def login():
 
         if user and user.check_password(password):
             log_login_ok(username)
-
-            # "Lembrar-me": 7 dias (reduzido de 30)
-            # Sem "lembrar-me": expira com o browser (sessão)
             duration = timedelta(days=7) if remember else None
             login_user(user, remember=remember, duration=duration)
 
-            # Validar redirect antes de usar — previne open redirect
             next_page = request.args.get('next', '')
             if not is_safe_redirect(next_page):
                 next_page = url_for('file.explorar')
@@ -86,7 +102,6 @@ def login():
             return redirect(next_page)
         else:
             log_login_falhou(username)
-            # Mensagem genérica — não revela se o usuário existe ou não
             flash('Usuário ou senha inválidos', 'error')
 
     return render_template('login.html')
@@ -99,19 +114,70 @@ def logout():
     username = current_user.username
     log_logout(username)
     logout_user()
-    session.clear()  # Limpa toda a sessão, não só o login
+    session.clear()
     flash('Você foi desconectado com sucesso', 'success')
     return redirect(url_for('auth.login'))
+
+
+# ===== PERFIL =====
+@auth_bp.route('/perfil', methods=['GET', 'POST'])
+@login_required
+def perfil():
+    if request.method == 'POST':
+        acao = request.form.get('acao')
+
+        # ===== ALTERAR NOME DE EXIBIÇÃO =====
+        if acao == 'nome':
+            novo_nome = request.form.get('nome', '').strip()
+
+            if not novo_nome:
+                flash('O nome não pode estar vazio.', 'error')
+                return redirect(url_for('auth.perfil'))
+
+            if len(novo_nome) > 50:
+                flash('O nome deve ter no máximo 50 caracteres.', 'error')
+                return redirect(url_for('auth.perfil'))
+
+            atualizar_env('ADMIN_NOME', novo_nome)
+            flash('✅ Nome de exibição atualizado com sucesso!', 'success')
+            return redirect(url_for('auth.perfil'))
+
+        # ===== ALTERAR SENHA =====
+        elif acao == 'senha':
+            senha_atual = request.form.get('senha_atual', '')
+            nova_senha = request.form.get('nova_senha', '')
+            confirmar = request.form.get('confirmar_senha', '')
+
+            # Verifica senha atual
+            if not current_user.check_password(senha_atual):
+                flash('Senha atual incorreta.', 'error')
+                return redirect(url_for('auth.perfil'))
+
+            # Valida nova senha
+            senha_ok, motivo = validar_senha(nova_senha)
+            if not senha_ok:
+                flash(motivo, 'error')
+                return redirect(url_for('auth.perfil'))
+
+            if nova_senha != confirmar:
+                flash('As senhas não coincidem.', 'error')
+                return redirect(url_for('auth.perfil'))
+
+            if nova_senha == senha_atual:
+                flash('A nova senha deve ser diferente da atual.', 'error')
+                return redirect(url_for('auth.perfil'))
+
+            novo_hash = generate_password_hash(nova_senha, method='pbkdf2:sha256:600000')
+            atualizar_env('ADMIN_PASSWORD_HASH', novo_hash)
+            flash('✅ Senha alterada com sucesso!', 'success')
+            return redirect(url_for('auth.perfil'))
+
+    return render_template('perfil.html')
 
 
 # ===== SETUP =====
 @auth_bp.route('/setup', methods=['GET', 'POST'])
 def setup():
-    """
-    Configuração inicial do sistema.
-    Acessível apenas na primeira execução.
-    """
-    # Reler do disco a cada request — evita problema de estado em memória
     first_run_file = os.path.join(ROOT_DIR, 'instance', '.firstrun')
     ja_configurado = (
         os.path.exists(first_run_file)
@@ -131,7 +197,6 @@ def setup():
         confirm = request.form.get('confirm_password', '')
         repo_path = request.form.get('repo_path', '').strip()
 
-        # --- Validações ---
         if not username or len(username) < 3:
             flash('O nome de usuário deve ter pelo menos 3 caracteres', 'error')
             return render_template('setup.html')
@@ -153,7 +218,6 @@ def setup():
             flash('Digite o caminho da pasta do repositório', 'error')
             return render_template('setup.html')
 
-        # Normalizar e validar o caminho da pasta
         repo_path = os.path.normpath(repo_path)
         if not os.path.isabs(repo_path):
             flash('O caminho da pasta deve ser absoluto (ex: /storage/emulated/0/MeuDrive)', 'error')
@@ -209,7 +273,6 @@ def setup():
         except PermissionError:
             flash('Sem permissão para criar a pasta ou o arquivo de configuração', 'error')
         except Exception:
-            # Não expor detalhes do erro
             flash('Erro ao salvar configuração. Verifique o caminho da pasta.', 'error')
 
     return render_template('setup.html')

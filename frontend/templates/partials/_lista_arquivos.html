@@ -1,3 +1,4 @@
+<!--_lista_arquivos.html-->
 <!-- Listagem de itens -->
 <section class="listagem-itens">
     <!-- Pastas -->
@@ -19,7 +20,6 @@
                     <span class="item-data">{{ pasta.data_modificacao }}</span>
                 </div>
             </div>
-            <!-- Pastas - botão de excluir individual -->
             <div class="item-acoes" onclick="event.stopPropagation()">
                 <form
                     action="{{ url_for('file.deletar_pasta', caminho_pasta=caminho + '/' + pasta.nome if caminho else pasta.nome) }}"
@@ -55,7 +55,6 @@
                     <span class="item-data">{{ imagem.data_modificacao }}</span>
                 </div>
             </div>
-            <!-- Imagens - botão de excluir individual -->
             <div class="item-acoes" onclick="event.stopPropagation()">
                 <a href="{{ url_for('file.download', caminho_arquivo=caminho + '/' + imagem.nome if caminho else imagem.nome) }}"
                     class="botao-download" title="Download" onclick="event.stopPropagation()">⬇️</a>
@@ -70,7 +69,6 @@
     </div>
     {% endfor %}
     {% endif %}
-
 
     <!-- Áudios -->
     {% if audios %}
@@ -91,7 +89,6 @@
                     <span class="item-data">{{ audio.data_modificacao }}</span>
                 </div>
             </div>
-            <!-- Áudios - botões de ação -->
             <div class="item-acoes" onclick="event.stopPropagation()">
                 <a href="{{ url_for('file.download', caminho_arquivo=caminho + '/' + audio.nome if caminho else audio.nome) }}"
                     class="botao-download" title="Download" onclick="event.stopPropagation()">⬇️</a>
@@ -99,6 +96,42 @@
                     action="{{ url_for('file.deletar_arquivo', caminho_arquivo=caminho + '/' + audio.nome if caminho else audio.nome) }}"
                     method="post" class="form-excluir"
                     onsubmit="event.preventDefault(); confirmarExclusao('{{ audio.nome }}', this); return false;">
+                    <button type="submit" class="botao-excluir" title="Excluir">🗑️</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- PDFs -->
+    {% if pdfs %}
+    {% for pdf in pdfs %}
+    <div class="item-link" data-nome="{{ pdf.nome }}" data-tipo="pdf"
+        data-caminho="{{ caminho + '/' + pdf.nome if caminho else pdf.nome }}">
+        <div class="item-card item-pdf">
+            <div class="item-checkbox" onclick="event.stopPropagation()">
+                <input type="checkbox" class="item-checkbox-input" data-nome="{{ pdf.nome }}" data-tipo="pdf"
+                    data-caminho="{{ caminho + '/' + pdf.nome if caminho else pdf.nome }}">
+            </div>
+            <div class="item-icone">📕</div>
+            <div class="item-info">
+                <div class="item-nome" title="{{ pdf.nome }}">{{ pdf.nome }}</div>
+                <div class="item-meta">
+                    <span class="item-tipo">PDF</span>
+                    <span class="item-tamanho">{{ pdf.tamanho_formatado }}</span>
+                    <span class="item-data">{{ pdf.data_modificacao }}</span>
+                </div>
+            </div>
+            <div class="item-acoes" onclick="event.stopPropagation()">
+                <a href="{{ url_for('file.visualizar_arquivo', caminho_arquivo=caminho + '/' + pdf.nome if caminho else pdf.nome) }}"
+                    class="botao-download" title="Visualizar" target="_blank" onclick="event.stopPropagation()">👁️</a>
+                <a href="{{ url_for('file.download', caminho_arquivo=caminho + '/' + pdf.nome if caminho else pdf.nome) }}"
+                    class="botao-download" title="Download" onclick="event.stopPropagation()">⬇️</a>
+                <form
+                    action="{{ url_for('file.deletar_arquivo', caminho_arquivo=caminho + '/' + pdf.nome if caminho else pdf.nome) }}"
+                    method="post" class="form-excluir"
+                    onsubmit="event.preventDefault(); confirmarExclusao('{{ pdf.nome }}', this); return false;">
                     <button type="submit" class="botao-excluir" title="Excluir">🗑️</button>
                 </form>
             </div>
@@ -128,7 +161,6 @@
                     <span class="item-data">{{ arquivo.data_modificacao }}</span>
                 </div>
             </div>
-            <!-- Arquivos comuns - botão de excluir individual -->
             <div class="item-acoes" onclick="event.stopPropagation()">
                 <a href="{{ url_for('file.download', caminho_arquivo=caminho + '/' + arquivo.nome if caminho else arquivo.nome) }}"
                     class="botao-download" title="Download" onclick="event.stopPropagation()">⬇️</a>
@@ -143,3 +175,4 @@
     </div>
     {% endfor %}
     {% endif %}
+</section>

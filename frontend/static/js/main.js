@@ -207,6 +207,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // ===== UPLOAD DE ARQUIVOS =====
 // Função central de upload — usada pelo botão, pelo drag & drop e pelo input file
+// ===== UPLOAD DE ARQUIVOS =====
+// Substitua a função window.uploadFiles inteira no seu main.js por esta.
+// O restante do arquivo permanece igual.
+
 window.uploadFiles = function (files) {
     if (!files || files.length === 0) return;
 
@@ -215,20 +219,44 @@ window.uploadFiles = function (files) {
 
     if (panel) panel.style.display = 'flex';
 
-    // Caminho atual extraído da URL (ex: /explorar/pasta/sub → /pasta/sub)
     const caminho = window.location.pathname.replace(/^\/explorar/, '') || '/';
+
+    // Mapa de ícones por extensão
+    const iconeMap = {
+        pdf: '📕',
+        jpg: '🖼️', jpeg: '🖼️', png: '🖼️', gif: '🖼️', webp: '🖼️', bmp: '🖼️',
+        mp3: '🎵', wav: '🎵', ogg: '🎵', m4a: '🎵', flac: '🎵',
+        mp4: '🎬', avi: '🎬', mkv: '🎬', mov: '🎬',
+        doc: '📘', docx: '📘',
+        xls: '📊', xlsx: '📊',
+        ppt: '📽️', pptx: '📽️',
+        zip: '📦', rar: '📦', '7z': '📦', tar: '📦', gz: '📦',
+        txt: '📃',
+    };
+
+    function getIcone(nomeArquivo) {
+        const ext = nomeArquivo.split('.').pop().toLowerCase();
+        return iconeMap[ext] || '📄';
+    }
 
     Array.from(files).forEach(file => {
         const item = document.createElement('div');
         item.className = 'upload-item';
         item.innerHTML = `
-            <div class="upload-name">${escapeHtml(file.name)}</div>
-            <div class="upload-bar"><div class="upload-fill"></div></div>
-            <div class="upload-status">Enviando...</div>
+            <div class="upload-item-icon">${getIcone(file.name)}</div>
+            <div class="upload-item-body">
+                <div class="upload-name" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</div>
+                <div class="upload-progress-row">
+                    <div class="upload-bar"><div class="upload-fill"></div></div>
+                    <span class="upload-percent">0%</span>
+                </div>
+                <div class="upload-status">Aguardando...</div>
+            </div>
         `;
         if (list) list.appendChild(item);
 
         const fill = item.querySelector('.upload-fill');
+        const percent = item.querySelector('.upload-percent');
         const status = item.querySelector('.upload-status');
 
         const formData = new FormData();
@@ -236,36 +264,39 @@ window.uploadFiles = function (files) {
 
         const xhr = new XMLHttpRequest();
         xhr.open('POST', `/upload${caminho}`, true);
-
-        // ✅ CSRF: obrigatório para o flask-wtf aceitar a requisição
         xhr.setRequestHeader('X-CSRFToken', getCsrfToken());
 
         xhr.upload.addEventListener('progress', (e) => {
             if (e.lengthComputable) {
-                const percent = Math.round((e.loaded / e.total) * 100);
-                if (fill) fill.style.width = percent + '%';
+                const pct = Math.round((e.loaded / e.total) * 100);
+                if (fill) fill.style.width = pct + '%';
+                if (percent) percent.textContent = pct + '%';
+                if (status) status.textContent = 'Enviando...';
             }
         });
 
         xhr.onload = () => {
             if (xhr.status === 200 || xhr.status === 302) {
                 if (fill) fill.style.width = '100%';
+                if (percent) percent.textContent = '100%';
                 if (status) status.textContent = 'Concluído ✓';
                 item.classList.add('success');
                 showToast(`✅ "${file.name}" enviado com sucesso!`, 'success');
-                // Atualiza a listagem sem recarregar a página
                 setTimeout(() => {
                     if (typeof atualizarLista === 'function') atualizarLista();
                 }, 500);
             } else if (xhr.status === 400) {
+                if (percent) percent.textContent = '';
                 if (status) status.textContent = 'Tipo não permitido ✗';
                 item.classList.add('error');
                 showToast(`❌ Tipo de arquivo não permitido: "${file.name}"`, 'error');
             } else if (xhr.status === 413) {
+                if (percent) percent.textContent = '';
                 if (status) status.textContent = 'Arquivo muito grande ✗';
                 item.classList.add('error');
                 showToast(`❌ "${file.name}" excede o limite de tamanho`, 'error');
             } else {
+                if (percent) percent.textContent = '';
                 if (status) status.textContent = 'Erro ✗';
                 item.classList.add('error');
                 showToast(`❌ Erro ao enviar "${file.name}"`, 'error');
@@ -273,6 +304,7 @@ window.uploadFiles = function (files) {
         };
 
         xhr.onerror = () => {
+            if (percent) percent.textContent = '';
             if (status) status.textContent = 'Erro de conexão';
             item.classList.add('error');
             showToast(`❌ Erro de conexão ao enviar "${file.name}"`, 'error');

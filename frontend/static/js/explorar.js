@@ -106,6 +106,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.addEventListener('click', function (e) {
         const link = e.target.closest('.item-link');
         if (link && link.querySelector('.item-imagem')) {
+            if (e.ctrlKey) return; // Ctrl+Clique é para seleção, não para abrir lightbox
             if (e.target.closest('.botao-download') || e.target.closest('.botao-excluir') ||
                 e.target.closest('form') || e.target.closest('button') ||
                 e.target.closest('.item-checkbox') || e.target.closest('.item-checkbox-input')) return;
@@ -234,6 +235,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (!ordenacaoBotoes.nome) return;
 
+    // Tamanho e data iniciam desc (maior/mais recente primeiro), os demais asc
+    const ordemPadrao = { nome: 'asc', tipo: 'asc', tamanho: 'desc', data: 'desc' };
     let ordenacaoAtual = { criterio: 'tipo', ordem: 'asc' };
     let isOrdenando = false;
 
@@ -273,10 +276,23 @@ document.addEventListener('DOMContentLoaded', function () {
         const container = document.querySelector('.listagem-itens');
         if (!container) { isOrdenando = false; return; }
         const items = Array.from(container.querySelectorAll('.item-link'));
+        const ordemTipos = { 'pasta': 0, 'imagem': 1, 'audio': 2, 'pdf': 3, 'arquivo': 4 };
+
         items.sort((a, b) => {
+            // Pastas sempre primeiro em qualquer critério exceto tipo (que já tem ordem própria)
+            if (ordenacaoAtual.criterio !== 'tipo') {
+                const aIsPasta = a.dataset.tipo === 'pasta';
+                const bIsPasta = b.dataset.tipo === 'pasta';
+                if (aIsPasta && !bIsPasta) return -1;
+                if (!aIsPasta && bIsPasta) return 1;
+            }
+
             let valA, valB;
             if (ordenacaoAtual.criterio === 'nome') { valA = a.dataset.nome.toLowerCase(); valB = b.dataset.nome.toLowerCase(); }
-            else if (ordenacaoAtual.criterio === 'tipo') { valA = a.dataset.tipo; valB = b.dataset.tipo; }
+            else if (ordenacaoAtual.criterio === 'tipo') {
+                valA = ordemTipos[a.dataset.tipo] ?? 99;
+                valB = ordemTipos[b.dataset.tipo] ?? 99;
+            }
             else if (ordenacaoAtual.criterio === 'tamanho') { valA = parseTamanho(a.querySelector('.item-tamanho')?.textContent); valB = parseTamanho(b.querySelector('.item-tamanho')?.textContent); }
             else if (ordenacaoAtual.criterio === 'data') { valA = parseData(a.querySelector('.item-data')?.textContent); valB = parseData(b.querySelector('.item-data')?.textContent); }
             if (valA < valB) return ordenacaoAtual.ordem === 'asc' ? -1 : 1;
@@ -291,8 +307,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     Object.entries(ordenacaoBotoes).forEach(([criterio, btn]) => {
         if (btn) btn.addEventListener('click', () => {
-            if (ordenacaoAtual.criterio === criterio) ordenacaoAtual.ordem = ordenacaoAtual.ordem === 'asc' ? 'desc' : 'asc';
-            else { ordenacaoAtual.criterio = criterio; ordenacaoAtual.ordem = 'asc'; }
+            if (ordenacaoAtual.criterio === criterio) {
+                ordenacaoAtual.ordem = ordenacaoAtual.ordem === 'asc' ? 'desc' : 'asc';
+            } else {
+                ordenacaoAtual.criterio = criterio;
+                ordenacaoAtual.ordem = ordemPadrao[criterio] || 'asc';
+            }
             ordenarItens();
         });
     });
@@ -325,6 +345,9 @@ document.addEventListener('DOMContentLoaded', function () {
             if (typeof window.openAudioModal === 'function') {
                 window.openAudioModal(`/visualizar/${caminho}`, nome, `/download/${caminho}`, card.querySelector('.form-excluir'));
             }
+        } else if (tipo === 'pdf') {
+            // PDF abre em nova aba para visualização no navegador
+            if (caminho) window.open(`/visualizar/${caminho}`, '_blank');
         } else if (tipo === 'arquivo') {
             if (caminho) window.location.href = `/download/${caminho}`;
         }
