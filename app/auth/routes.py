@@ -115,8 +115,11 @@ def logout():
     log_logout(username)
     logout_user()
     session.clear()
+    response = redirect(url_for('auth.login'))
+    response.delete_cookie('session')
+    response.delete_cookie('remember_token')
     flash('Você foi desconectado com sucesso', 'success')
-    return redirect(url_for('auth.login'))
+    return response
 
 
 # ===== PERFIL =====

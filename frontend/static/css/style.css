@@ -141,6 +141,9 @@ body {
     padding: 20px;
     border-top: 1px solid var(--border);
     margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .user-info {
@@ -2408,10 +2411,10 @@ body {
     text-decoration: none;
     color: var(--text);
     transition: var(--transition);
-    margin-bottom: 12px;
     cursor: pointer;
     width: 100%;
     min-width: 0;
+    /* margin-bottom removido */
 }
  
 .user-info-link:hover {

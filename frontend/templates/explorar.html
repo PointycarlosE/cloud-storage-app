@@ -59,7 +59,7 @@
             <div class="sidebar-footer">
                 <a href="{{ url_for('auth.perfil') }}" class="user-info user-info-link">
                     <span class="user-icon">👤</span>
-                    <span class="user-name">...</span>
+                    <span class="user-name">{{ current_user.nome if current_user.is_authenticated else 'Usuário' }}</span>
                 </a>
                 <a href="{{ url_for('auth.logout') }}" class="logout-link">
                     <span class="logout-icon">🚪</span>
